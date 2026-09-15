@@ -10,7 +10,25 @@
 			<key>HeadersPath</key>
 			<string>Headers</string>
 			<key>LibraryIdentifier</key>
-			<string>xros-arm64</string>
+			<string>watchos-arm64-simulator</string>
+			<key>LibraryPath</key>
+			<string>libcrypto.a</string>
+			<key>SupportedArchitectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>SupportedPlatform</key>
+			<string>watchos</string>
+			<key>SupportedPlatformVariant</key>
+			<string>simulator</string>
+		</dict>
+		<dict>
+			<key>BinaryPath</key>
+			<string>libcrypto.a</string>
+			<key>HeadersPath</key>
+			<string>Headers</string>
+			<key>LibraryIdentifier</key>
+			<string>xros-arm64-simulator</string>
 			<key>LibraryPath</key>
 			<string>libcrypto.a</string>
 			<key>SupportedArchitectures</key>
@@ -19,22 +37,8 @@
 			</array>
 			<key>SupportedPlatform</key>
 			<string>xros</string>
-		</dict>
-		<dict>
-			<key>BinaryPath</key>
-			<string>libcrypto.a</string>
-			<key>HeadersPath</key>
-			<string>Headers</string>
-			<key>LibraryIdentifier</key>
-			<string>macos-arm64</string>
-			<key>LibraryPath</key>
-			<string>libcrypto.a</string>
-			<key>SupportedArchitectures</key>
-			<array>
-				<string>arm64</string>
-			</array>
-			<key>SupportedPlatform</key>
-			<string>macos</string>
+			<key>SupportedPlatformVariant</key>
+			<string>simulator</string>
 		</dict>
 		<dict>
 			<key>BinaryPath</key>
@@ -75,6 +79,38 @@
 			<key>HeadersPath</key>
 			<string>Headers</string>
 			<key>LibraryIdentifier</key>
+			<string>xros-arm64</string>
+			<key>LibraryPath</key>
+			<string>libcrypto.a</string>
+			<key>SupportedArchitectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>SupportedPlatform</key>
+			<string>xros</string>
+		</dict>
+		<dict>
+			<key>BinaryPath</key>
+			<string>libcrypto.a</string>
+			<key>HeadersPath</key>
+			<string>Headers</string>
+			<key>LibraryIdentifier</key>
+			<string>macos-arm64</string>
+			<key>LibraryPath</key>
+			<string>libcrypto.a</string>
+			<key>SupportedArchitectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>SupportedPlatform</key>
+			<string>macos</string>
+		</dict>
+		<dict>
+			<key>BinaryPath</key>
+			<string>libcrypto.a</string>
+			<key>HeadersPath</key>
+			<string>Headers</string>
+			<key>LibraryIdentifier</key>
 			<string>ios-arm64-simulator</string>
 			<key>LibraryPath</key>
 			<string>libcrypto.a</string>
@@ -84,42 +120,6 @@
 			</array>
 			<key>SupportedPlatform</key>
 			<string>ios</string>
-			<key>SupportedPlatformVariant</key>
-			<string>simulator</string>
-		</dict>
-		<dict>
-			<key>BinaryPath</key>
-			<string>libcrypto.a</string>
-			<key>HeadersPath</key>
-			<string>Headers</string>
-			<key>LibraryIdentifier</key>
-			<string>xros-arm64-simulator</string>
-			<key>LibraryPath</key>
-			<string>libcrypto.a</string>
-			<key>SupportedArchitectures</key>
-			<array>
-				<string>arm64</string>
-			</array>
-			<key>SupportedPlatform</key>
-			<string>xros</string>
-			<key>SupportedPlatformVariant</key>
-			<string>simulator</string>
-		</dict>
-		<dict>
-			<key>BinaryPath</key>
-			<string>libcrypto.a</string>
-			<key>HeadersPath</key>
-			<string>Headers</string>
-			<key>LibraryIdentifier</key>
-			<string>watchos-arm64-simulator</string>
-			<key>LibraryPath</key>
-			<string>libcrypto.a</string>
-			<key>SupportedArchitectures</key>
-			<array>
-				<string>arm64</string>
-			</array>
-			<key>SupportedPlatform</key>
-			<string>watchos</string>
 			<key>SupportedPlatformVariant</key>
 			<string>simulator</string>
 		</dict>
