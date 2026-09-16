@@ -4,10 +4,8 @@ import Testing
 
 @Suite("SSHUserKeyAlgorithm")
 struct SSHUserKeyAlgorithmTests {
-    private let keyPairsRoot = "TestServer/KeyPairs"
-
     private func load(_ name: String) throws -> String? {
-        let path = "\(keyPairsRoot)/\(name)"
+        let path = "\(TS.keyPairsRoot)/\(name)"
         guard FileManager.default.fileExists(atPath: path) else { return nil }
         return try String(contentsOfFile: path, encoding: .utf8)
     }

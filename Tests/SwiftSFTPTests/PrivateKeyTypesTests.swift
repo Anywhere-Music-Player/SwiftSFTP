@@ -8,7 +8,7 @@ struct PrivateKeyTypesTests {
 
     @Test("PrivateKeyString valid and algorithm for OpenSSH RSA")
     func privateKeyStringValidRSA() throws {
-        let path = "TestServer/KeyPairs/rsa-private-openssh-clear"
+        let path = "\(TS.keyPairsRoot)/rsa-private-openssh-clear"
         guard FileManager.default.fileExists(atPath: path) else { return }
         let text = try String(contentsOfFile: path, encoding: .utf8)
         let key = PrivateKeyString(representation: text)
@@ -26,7 +26,7 @@ struct PrivateKeyTypesTests {
 
     @Test("PrivateKeyString encrypted validity and algorithm")
     func privateKeyStringEncrypted() throws {
-        let path = "TestServer/KeyPairs/ed25519-private-pkcs8-encrypted"
+        let path = "\(TS.keyPairsRoot)/ed25519-private-pkcs8-encrypted"
         guard FileManager.default.fileExists(atPath: path) else { return }
         let text = try String(contentsOfFile: path, encoding: .utf8)
 
@@ -45,7 +45,7 @@ struct PrivateKeyTypesTests {
 
     @Test("PrivateKeyFile valid and algorithm for file URL")
     func privateKeyFileValid() {
-        let path = "TestServer/KeyPairs/p256-private-openssh-clear"
+        let path = "\(TS.keyPairsRoot)/p256-private-openssh-clear"
         guard FileManager.default.fileExists(atPath: path) else { return }
         let key = PrivateKeyFile(file: URL(fileURLWithPath: path))
         #expect(key.valid)

@@ -184,8 +184,8 @@ struct PrivateKeyAuthPlannerTests {
 
     @Test("candidates(from:) classifies memory keys and assigns indices")
     func candidatesFromMemorySet() throws {
-        let rsaPath = "TestServer/KeyPairs/rsa-private-openssh-clear"
-        let edPath = "TestServer/KeyPairs/ed25519-private-openssh-clear"
+        let rsaPath = "\(TS.keyPairsRoot)/rsa-private-openssh-clear"
+        let edPath = "\(TS.keyPairsRoot)/ed25519-private-openssh-clear"
         guard FileManager.default.fileExists(atPath: rsaPath),
               FileManager.default.fileExists(atPath: edPath) else { return }
 
@@ -207,8 +207,8 @@ struct PrivateKeyAuthPlannerTests {
 
     @Test("candidates(from:) classifies file keys after string keys")
     func candidatesFromMixedSet() throws {
-        let rsaPath = "TestServer/KeyPairs/rsa-private-openssh-clear"
-        let edPath = "TestServer/KeyPairs/ed25519-private-openssh-clear"
+        let rsaPath = "\(TS.keyPairsRoot)/rsa-private-openssh-clear"
+        let edPath = "\(TS.keyPairsRoot)/ed25519-private-openssh-clear"
         guard FileManager.default.fileExists(atPath: rsaPath),
               FileManager.default.fileExists(atPath: edPath) else { return }
 
@@ -244,7 +244,7 @@ struct PrivateKeyAuthPlannerTests {
 
     @Test("candidates(from:) detects encrypted PKCS#8 with passphrase")
     func candidatesEncryptedWithPassphrase() throws {
-        let path = "TestServer/KeyPairs/rsa-private-pkcs8-encrypted"
+        let path = "\(TS.keyPairsRoot)/rsa-private-pkcs8-encrypted"
         guard FileManager.default.fileExists(atPath: path) else { return }
 
         let text = try String(contentsOfFile: path, encoding: .utf8)
@@ -265,9 +265,9 @@ struct PrivateKeyAuthPlannerTests {
 
     @Test("full pipeline: candidates then plan with server preference")
     func candidatesThenPlanPipeline() throws {
-        let rsaPath = "TestServer/KeyPairs/rsa-private-openssh-clear"
-        let edPath = "TestServer/KeyPairs/ed25519-private-openssh-clear"
-        let p256Path = "TestServer/KeyPairs/p256-private-openssh-clear"
+        let rsaPath = "\(TS.keyPairsRoot)/rsa-private-openssh-clear"
+        let edPath = "\(TS.keyPairsRoot)/ed25519-private-openssh-clear"
+        let p256Path = "\(TS.keyPairsRoot)/p256-private-openssh-clear"
         guard FileManager.default.fileExists(atPath: rsaPath),
               FileManager.default.fileExists(atPath: edPath),
               FileManager.default.fileExists(atPath: p256Path) else { return }

@@ -8,7 +8,7 @@ import Testing
 /// `TestServer/KeyPairs/` fixtures.
 @Suite("SFTPClient: Multi-key auth", .serialized)
 struct SFTPClientMultiKeyAuth {
-    private let keyRoot = "TestServer/KeyPairs"
+    private let keyRoot = TS.keyPairsRoot
 
     private func keyURL(_ name: String) -> URL? {
         let path = "\(keyRoot)/\(name)"

@@ -268,7 +268,7 @@ struct SFTPClientHostkeyAndAuth {
 
     @Test("public key file login succeeds for charmander with RSA")
     func publicKeyFileLoginSucceeds() async throws {
-        let keyPath = URL(fileURLWithPath: "TestServer/KeyPairs/rsa-private-openssh-clear")
+        let keyPath = URL(fileURLWithPath: "\(TS.keyPairsRoot)/rsa-private-openssh-clear")
         guard FileManager.default.fileExists(atPath: keyPath.path) else { return }
 
         try await withClient { _ in
@@ -284,7 +284,7 @@ struct SFTPClientHostkeyAndAuth {
 
     @Test("public key string login succeeds for charmander with RSA")
     func publicKeyStringLoginSucceeds() async throws {
-        let keyPath = "TestServer/KeyPairs/rsa-private-openssh-clear"
+        let keyPath = "\(TS.keyPairsRoot)/rsa-private-openssh-clear"
         guard let keyData = try? String(contentsOfFile: keyPath, encoding: .utf8) else { return }
 
         try await withClient { _ in
@@ -300,7 +300,7 @@ struct SFTPClientHostkeyAndAuth {
 
     @Test("encrypted private key file login succeeds for charmander with RSA")
     func encryptedPrivateKeyFileLoginSucceeds() async throws {
-        let keyPath = URL(fileURLWithPath: "TestServer/KeyPairs/rsa-private-pkcs8-encrypted")
+        let keyPath = URL(fileURLWithPath: "\(TS.keyPairsRoot)/rsa-private-pkcs8-encrypted")
         guard FileManager.default.fileExists(atPath: keyPath.path) else { return }
 
         try await withClient { _ in
@@ -319,7 +319,7 @@ struct SFTPClientHostkeyAndAuth {
 
     @Test("encrypted private key string login succeeds for charmander with RSA")
     func encryptedPrivateKeyStringLoginSucceeds() async throws {
-        let keyPath = "TestServer/KeyPairs/rsa-private-pkcs8-encrypted"
+        let keyPath = "\(TS.keyPairsRoot)/rsa-private-pkcs8-encrypted"
         guard let keyData = try? String(contentsOfFile: keyPath, encoding: .utf8) else { return }
 
         try await withClient { _ in
@@ -338,7 +338,7 @@ struct SFTPClientHostkeyAndAuth {
 
     @Test("encrypted private key login rejects wrong passphrase")
     func encryptedPrivateKeyLoginRejectsWrongPassphrase() async throws {
-        let keyPath = URL(fileURLWithPath: "TestServer/KeyPairs/rsa-private-pkcs8-encrypted")
+        let keyPath = URL(fileURLWithPath: "\(TS.keyPairsRoot)/rsa-private-pkcs8-encrypted")
         guard FileManager.default.fileExists(atPath: keyPath.path) else { return }
 
         try await withClient { _ in
@@ -358,9 +358,9 @@ struct SFTPClientHostkeyAndAuth {
 
     @Test("privateKeys multi-identity picks RSA among other local keys for charmander")
     func privateKeysMultiIdentitySelectsAuthorizedRSA() async throws {
-        let rsa = URL(fileURLWithPath: "TestServer/KeyPairs/rsa-private-openssh-clear")
-        let ed25519 = URL(fileURLWithPath: "TestServer/KeyPairs/ed25519-private-openssh-clear")
-        let p256 = URL(fileURLWithPath: "TestServer/KeyPairs/p256-private-openssh-clear")
+        let rsa = URL(fileURLWithPath: "\(TS.keyPairsRoot)/rsa-private-openssh-clear")
+        let ed25519 = URL(fileURLWithPath: "\(TS.keyPairsRoot)/ed25519-private-openssh-clear")
+        let p256 = URL(fileURLWithPath: "\(TS.keyPairsRoot)/p256-private-openssh-clear")
         guard FileManager.default.fileExists(atPath: rsa.path),
               FileManager.default.fileExists(atPath: ed25519.path),
               FileManager.default.fileExists(atPath: p256.path) else { return }
@@ -385,8 +385,8 @@ struct SFTPClientHostkeyAndAuth {
 
     @Test("privateKeys multi-identity fails when no key is authorized")
     func privateKeysMultiIdentityFailsWhenNoneAuthorized() async throws {
-        let ed25519 = URL(fileURLWithPath: "TestServer/KeyPairs/ed25519-private-openssh-clear")
-        let p256 = URL(fileURLWithPath: "TestServer/KeyPairs/p256-private-openssh-clear")
+        let ed25519 = URL(fileURLWithPath: "\(TS.keyPairsRoot)/ed25519-private-openssh-clear")
+        let p256 = URL(fileURLWithPath: "\(TS.keyPairsRoot)/p256-private-openssh-clear")
         guard FileManager.default.fileExists(atPath: ed25519.path),
               FileManager.default.fileExists(atPath: p256.path) else { return }
 
