@@ -276,8 +276,16 @@ extension SSHShellAgent: SSHShellAgentProtocol {
     }
 
     /// Ensures `path` exists as a directory via the parent SFTP client (`makePath: true`).
-    private func ensureDestinationDirectory(_ path: String) async throws {
-        try await client.createDirectory(path: path, makePath: true, mode: .serverDefault)
+    ///
+    /// `path` is converted through ``ShellAgentSupport/sftpFormForParentComputation(_:shellType:)`` unless
+    /// `alreadyInSFTPForm` is `true`, so the directory this creates always agrees with the path the corresponding
+    /// transfer command targets, regardless of leading/trailing whitespace in the caller-supplied path.
+    private func ensureDestinationDirectory(_ path: String, alreadyInSFTPForm: Bool = false) async throws {
+        let sftpPath = alreadyInSFTPForm ? path : ShellAgentSupport.sftpFormForParentComputation(
+            path,
+            shellType: shellType
+        )
+        try await client.createDirectory(path: sftpPath, makePath: true, mode: .serverDefault)
     }
 
     /// Picks `7z`, `7zz`, or `7za` when present on the remote host.
@@ -405,13 +413,17 @@ extension SSHShellAgent: SSHShellAgentProtocol {
     }
 
     /// Ensures the parent of a file path exists via SFTP (`makePath: true`).
+    ///
+    /// Uses ``ShellAgentSupport/sftpFormForParentComputation(_:shellType:)`` rather than raw `sanitizePath`, so the
+    /// directory created here agrees with the path ``ShellAgentSupport/pathForRemoteShell(_:shellType:)`` builds the
+    /// transfer command against — both trim the same way.
     private func ensureParentDirectory(of filePath: String) async throws {
-        let sanitized = filePath.sanitizePath
-        let parent = sanitized.removingLastPathComponent
+        let sftpPath = ShellAgentSupport.sftpFormForParentComputation(filePath, shellType: shellType)
+        let parent = sftpPath.removingLastPathComponent
         guard !parent.isEmpty, parent != ".", parent != "/" else {
             return
         }
-        try await ensureDestinationDirectory(parent)
+        try await ensureDestinationDirectory(parent, alreadyInSFTPForm: true)
     }
 
     /// Throws ``ShellAgentError/hostDoesNotSupportOperation`` when `curl` / `curl.exe` is not on `PATH`.

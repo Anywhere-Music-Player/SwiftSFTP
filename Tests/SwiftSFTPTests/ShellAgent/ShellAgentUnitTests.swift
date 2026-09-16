@@ -681,6 +681,28 @@ struct ShellAgentUnitTests {
         )
     }
 
+    @Test("sftpFormForParentComputation agrees with pathForRemoteShell on absoluteness")
+    func sftpFormForParentComputationAgreesWithShellPath() {
+        // A leading space before the leading "/" must not flip the path from absolute to relative: the
+        // directory ensureDestinationDirectory/ensureParentDirectory create over SFTP has to match the path the
+        // transfer command (built from pathForRemoteShell) actually targets.
+        let path = " /remote/dir/file.txt"
+        #expect(
+            ShellAgentSupport.sftpFormForParentComputation(path, shellType: .linux)
+                == ShellAgentSupport.pathForRemoteShell(path, shellType: .linux)
+        )
+        #expect(
+            ShellAgentSupport.sftpFormForParentComputation(path, shellType: .linux).removingLastPathComponent
+                == "/remote/dir"
+        )
+
+        let windowsPath = "  /C:/dst/nested/b.bin  "
+        #expect(
+            ShellAgentSupport.sftpFormForParentComputation(windowsPath, shellType: .windowsPowerShell)
+                == "/C:/dst/nested/b.bin"
+        )
+    }
+
     @Test("Windows copyCommand embeds native paths from SFTP form")
     func windowsCopyCommandRewritesPaths() throws {
         let command = try ShellAgentSupport.copyCommand(
