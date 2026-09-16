@@ -18,7 +18,7 @@ extension String? {
 
 extension String {
     var sanitizePath: String {
-        var s = self
+        var s = self.trimmingCharacters(in: .newlines)
 
         if s.first == "/" {
             s = s.pathComponents.rootPath

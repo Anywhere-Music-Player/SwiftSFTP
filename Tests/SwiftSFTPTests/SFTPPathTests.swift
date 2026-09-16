@@ -8,8 +8,8 @@ struct SFTPPathTests {
         " relative.bin ",
         " ",
         "/parent/ child /file ",
-        "/\tname\n",
-        "\nrelative\t",
+        "/\tname",
+        "relative\t",
         "/пісня 🎵 ",
     ])
     func preservesWhitespace(path: String) {
