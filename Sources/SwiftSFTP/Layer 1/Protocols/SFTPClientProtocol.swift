@@ -6,8 +6,8 @@ import Logging
 /// `SFTPClientProtocol` models an SSH session plus an initialized SFTP subsystem. The initializer validates and stores
 /// configuration only; call ``login(timeOut:)`` before performing remote filesystem operations.
 ///
-/// Implementations in this package sanitize user-provided remote paths before passing them to libssh2: leading and
-/// trailing whitespace is trimmed, path components are normalized with PathWorks, and empty input becomes `"."`.
+/// Implementations normalize remote path components with PathWorks and map empty input to `"."`. Whitespace in
+/// remote names is preserved. Use the explicit Windows-path conversion APIs when normalizing Windows notation.
 /// Operations throw ``AlreadyClosed`` after ``close()`` and throw ``NotLoggedIn`` when an operation needs an SFTP
 /// subsystem that has not been initialized.
 public protocol SFTPClientProtocol: Identifiable, Sendable, AnyObject {
