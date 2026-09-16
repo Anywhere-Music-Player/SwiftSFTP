@@ -68,13 +68,16 @@ public func SFTPOpen(
     mode: LibSSH2SFTPPOSIXPermissions,
     openType: LibSSH2SFTPOpenType
 ) throws -> LibSSH2SFTPHandle {
+    // Creation permissions are irrelevant to existing files. In particular, the mkdir-only
+    // serverDefault sentinel would otherwise be serialized by libssh2 as 0xffffffff.
+    let permissions: LibSSH2SFTPPOSIXPermissions = flags.contains(.create) ? mode : []
     let handle = filename.withCString {
         libssh2.libssh2_sftp_open_ex(
             sftp.rawValue,
             $0,
             filename.uint32Length,
             CUnsignedLong(flags.rawValue),
-            mode.rawValue,
+            permissions.rawValue,
             openType.libssh2Value
         )
     }
