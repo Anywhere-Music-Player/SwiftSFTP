@@ -135,30 +135,9 @@ extern "C" {
 SKM_DEFINE_STACK_OF_INTERNAL(X509_ALGOR, X509_ALGOR, X509_ALGOR)
 #define sk_X509_ALGOR_num(sk) OPENSSL_sk_num(ossl_check_const_X509_ALGOR_sk_type(sk))
 #define sk_X509_ALGOR_value(sk, idx) ((X509_ALGOR *)OPENSSL_sk_value(ossl_check_const_X509_ALGOR_sk_type(sk), (idx)))
-#define sk_X509_ALGOR_new(cmp) \
-    ((STACK_OF(X509_ALGOR) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new(ossl_check_X509_ALGOR_compfunc_type(cmp)), \
-                sk_X509_ALGOR_cmpfunc_thunk), \
-            sk_X509_ALGOR_copyfunc_thunk), \
-        sk_X509_ALGOR_freefunc_thunk))
-#define sk_X509_ALGOR_new_null() \
-    ((STACK_OF(X509_ALGOR) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_null(), \
-                sk_X509_ALGOR_cmpfunc_thunk), \
-            sk_X509_ALGOR_copyfunc_thunk), \
-        sk_X509_ALGOR_freefunc_thunk))
-#define sk_X509_ALGOR_new_reserve(cmp, n) \
-    ((STACK_OF(X509_ALGOR) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_reserve(ossl_check_X509_ALGOR_compfunc_type(cmp), (n)), \
-                sk_X509_ALGOR_cmpfunc_thunk), \
-            sk_X509_ALGOR_copyfunc_thunk), \
-        sk_X509_ALGOR_freefunc_thunk))
+#define sk_X509_ALGOR_new(cmp) ((STACK_OF(X509_ALGOR) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new(ossl_check_X509_ALGOR_compfunc_type(cmp)), sk_X509_ALGOR_cmpfunc_thunk))
+#define sk_X509_ALGOR_new_null() ((STACK_OF(X509_ALGOR) *)OPENSSL_sk_set_thunks(OPENSSL_sk_new_null(), sk_X509_ALGOR_freefunc_thunk))
+#define sk_X509_ALGOR_new_reserve(cmp, n) ((STACK_OF(X509_ALGOR) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new_reserve(ossl_check_X509_ALGOR_compfunc_type(cmp), (n)), sk_X509_ALGOR_cmpfunc_thunk))
 #define sk_X509_ALGOR_reserve(sk, n) OPENSSL_sk_reserve(ossl_check_X509_ALGOR_sk_type(sk), (n))
 #define sk_X509_ALGOR_free(sk) OPENSSL_sk_free(ossl_check_X509_ALGOR_sk_type(sk))
 #define sk_X509_ALGOR_zero(sk) OPENSSL_sk_zero(ossl_check_X509_ALGOR_sk_type(sk))
@@ -176,25 +155,8 @@ SKM_DEFINE_STACK_OF_INTERNAL(X509_ALGOR, X509_ALGOR, X509_ALGOR)
 #define sk_X509_ALGOR_find_all(sk, ptr, pnum) OPENSSL_sk_find_all(ossl_check_X509_ALGOR_sk_type(sk), ossl_check_X509_ALGOR_type(ptr), pnum)
 #define sk_X509_ALGOR_sort(sk) OPENSSL_sk_sort(ossl_check_X509_ALGOR_sk_type(sk))
 #define sk_X509_ALGOR_is_sorted(sk) OPENSSL_sk_is_sorted(ossl_check_const_X509_ALGOR_sk_type(sk))
-#define sk_X509_ALGOR_dup(sk) \
-    ((STACK_OF(X509_ALGOR) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_dup(ossl_check_const_X509_ALGOR_sk_type(sk)), \
-                sk_X509_ALGOR_cmpfunc_thunk), \
-            sk_X509_ALGOR_copyfunc_thunk), \
-        sk_X509_ALGOR_freefunc_thunk))
-#define sk_X509_ALGOR_deep_copy(sk, copyfunc, freefunc) \
-    ((STACK_OF(X509_ALGOR) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_deep_copy( \
-                    ossl_check_const_X509_ALGOR_sk_type(sk), \
-                    ossl_check_X509_ALGOR_copyfunc_type(copyfunc), \
-                    ossl_check_X509_ALGOR_freefunc_type(freefunc)), \
-                sk_X509_ALGOR_cmpfunc_thunk), \
-            sk_X509_ALGOR_copyfunc_thunk), \
-        sk_X509_ALGOR_freefunc_thunk))
+#define sk_X509_ALGOR_dup(sk) ((STACK_OF(X509_ALGOR) *)OPENSSL_sk_dup(ossl_check_const_X509_ALGOR_sk_type(sk)))
+#define sk_X509_ALGOR_deep_copy(sk, copyfunc, freefunc) ((STACK_OF(X509_ALGOR) *)OPENSSL_sk_deep_copy(ossl_check_const_X509_ALGOR_sk_type(sk), ossl_check_X509_ALGOR_copyfunc_type(copyfunc), ossl_check_X509_ALGOR_freefunc_type(freefunc)))
 #define sk_X509_ALGOR_set_cmp_func(sk, cmp) ((sk_X509_ALGOR_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_X509_ALGOR_sk_type(sk), ossl_check_X509_ALGOR_compfunc_type(cmp)))
 
 /* clang-format on */
@@ -242,30 +204,9 @@ struct asn1_string_table_st {
 SKM_DEFINE_STACK_OF_INTERNAL(ASN1_STRING_TABLE, ASN1_STRING_TABLE, ASN1_STRING_TABLE)
 #define sk_ASN1_STRING_TABLE_num(sk) OPENSSL_sk_num(ossl_check_const_ASN1_STRING_TABLE_sk_type(sk))
 #define sk_ASN1_STRING_TABLE_value(sk, idx) ((ASN1_STRING_TABLE *)OPENSSL_sk_value(ossl_check_const_ASN1_STRING_TABLE_sk_type(sk), (idx)))
-#define sk_ASN1_STRING_TABLE_new(cmp) \
-    ((STACK_OF(ASN1_STRING_TABLE) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new(ossl_check_ASN1_STRING_TABLE_compfunc_type(cmp)), \
-                sk_ASN1_STRING_TABLE_cmpfunc_thunk), \
-            sk_ASN1_STRING_TABLE_copyfunc_thunk), \
-        sk_ASN1_STRING_TABLE_freefunc_thunk))
-#define sk_ASN1_STRING_TABLE_new_null() \
-    ((STACK_OF(ASN1_STRING_TABLE) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_null(), \
-                sk_ASN1_STRING_TABLE_cmpfunc_thunk), \
-            sk_ASN1_STRING_TABLE_copyfunc_thunk), \
-        sk_ASN1_STRING_TABLE_freefunc_thunk))
-#define sk_ASN1_STRING_TABLE_new_reserve(cmp, n) \
-    ((STACK_OF(ASN1_STRING_TABLE) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_reserve(ossl_check_ASN1_STRING_TABLE_compfunc_type(cmp), (n)), \
-                sk_ASN1_STRING_TABLE_cmpfunc_thunk), \
-            sk_ASN1_STRING_TABLE_copyfunc_thunk), \
-        sk_ASN1_STRING_TABLE_freefunc_thunk))
+#define sk_ASN1_STRING_TABLE_new(cmp) ((STACK_OF(ASN1_STRING_TABLE) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new(ossl_check_ASN1_STRING_TABLE_compfunc_type(cmp)), sk_ASN1_STRING_TABLE_cmpfunc_thunk))
+#define sk_ASN1_STRING_TABLE_new_null() ((STACK_OF(ASN1_STRING_TABLE) *)OPENSSL_sk_set_thunks(OPENSSL_sk_new_null(), sk_ASN1_STRING_TABLE_freefunc_thunk))
+#define sk_ASN1_STRING_TABLE_new_reserve(cmp, n) ((STACK_OF(ASN1_STRING_TABLE) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new_reserve(ossl_check_ASN1_STRING_TABLE_compfunc_type(cmp), (n)), sk_ASN1_STRING_TABLE_cmpfunc_thunk))
 #define sk_ASN1_STRING_TABLE_reserve(sk, n) OPENSSL_sk_reserve(ossl_check_ASN1_STRING_TABLE_sk_type(sk), (n))
 #define sk_ASN1_STRING_TABLE_free(sk) OPENSSL_sk_free(ossl_check_ASN1_STRING_TABLE_sk_type(sk))
 #define sk_ASN1_STRING_TABLE_zero(sk) OPENSSL_sk_zero(ossl_check_ASN1_STRING_TABLE_sk_type(sk))
@@ -283,25 +224,8 @@ SKM_DEFINE_STACK_OF_INTERNAL(ASN1_STRING_TABLE, ASN1_STRING_TABLE, ASN1_STRING_T
 #define sk_ASN1_STRING_TABLE_find_all(sk, ptr, pnum) OPENSSL_sk_find_all(ossl_check_ASN1_STRING_TABLE_sk_type(sk), ossl_check_ASN1_STRING_TABLE_type(ptr), pnum)
 #define sk_ASN1_STRING_TABLE_sort(sk) OPENSSL_sk_sort(ossl_check_ASN1_STRING_TABLE_sk_type(sk))
 #define sk_ASN1_STRING_TABLE_is_sorted(sk) OPENSSL_sk_is_sorted(ossl_check_const_ASN1_STRING_TABLE_sk_type(sk))
-#define sk_ASN1_STRING_TABLE_dup(sk) \
-    ((STACK_OF(ASN1_STRING_TABLE) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_dup(ossl_check_const_ASN1_STRING_TABLE_sk_type(sk)), \
-                sk_ASN1_STRING_TABLE_cmpfunc_thunk), \
-            sk_ASN1_STRING_TABLE_copyfunc_thunk), \
-        sk_ASN1_STRING_TABLE_freefunc_thunk))
-#define sk_ASN1_STRING_TABLE_deep_copy(sk, copyfunc, freefunc) \
-    ((STACK_OF(ASN1_STRING_TABLE) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_deep_copy( \
-                    ossl_check_const_ASN1_STRING_TABLE_sk_type(sk), \
-                    ossl_check_ASN1_STRING_TABLE_copyfunc_type(copyfunc), \
-                    ossl_check_ASN1_STRING_TABLE_freefunc_type(freefunc)), \
-                sk_ASN1_STRING_TABLE_cmpfunc_thunk), \
-            sk_ASN1_STRING_TABLE_copyfunc_thunk), \
-        sk_ASN1_STRING_TABLE_freefunc_thunk))
+#define sk_ASN1_STRING_TABLE_dup(sk) ((STACK_OF(ASN1_STRING_TABLE) *)OPENSSL_sk_dup(ossl_check_const_ASN1_STRING_TABLE_sk_type(sk)))
+#define sk_ASN1_STRING_TABLE_deep_copy(sk, copyfunc, freefunc) ((STACK_OF(ASN1_STRING_TABLE) *)OPENSSL_sk_deep_copy(ossl_check_const_ASN1_STRING_TABLE_sk_type(sk), ossl_check_ASN1_STRING_TABLE_copyfunc_type(copyfunc), ossl_check_ASN1_STRING_TABLE_freefunc_type(freefunc)))
 #define sk_ASN1_STRING_TABLE_set_cmp_func(sk, cmp) ((sk_ASN1_STRING_TABLE_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_ASN1_STRING_TABLE_sk_type(sk), ossl_check_ASN1_STRING_TABLE_compfunc_type(cmp)))
 
 /* clang-format on */
@@ -322,10 +246,7 @@ SKM_DEFINE_STACK_OF_INTERNAL(ASN1_STRING_TABLE, ASN1_STRING_TABLE, ASN1_STRING_T
  */
 typedef struct ASN1_TEMPLATE_st ASN1_TEMPLATE;
 typedef struct ASN1_TLC_st ASN1_TLC;
-/*
- * This is deliberately used as an opaque pointer to a structure that
- * is never defined. In other words it will behave like void *
- */
+/* This is just an opaque pointer */
 typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 /* Declare ASN1 functions: the implement macro is in asn1t.h */
@@ -601,30 +522,9 @@ struct asn1_type_st {
 SKM_DEFINE_STACK_OF_INTERNAL(ASN1_TYPE, ASN1_TYPE, ASN1_TYPE)
 #define sk_ASN1_TYPE_num(sk) OPENSSL_sk_num(ossl_check_const_ASN1_TYPE_sk_type(sk))
 #define sk_ASN1_TYPE_value(sk, idx) ((ASN1_TYPE *)OPENSSL_sk_value(ossl_check_const_ASN1_TYPE_sk_type(sk), (idx)))
-#define sk_ASN1_TYPE_new(cmp) \
-    ((STACK_OF(ASN1_TYPE) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new(ossl_check_ASN1_TYPE_compfunc_type(cmp)), \
-                sk_ASN1_TYPE_cmpfunc_thunk), \
-            sk_ASN1_TYPE_copyfunc_thunk), \
-        sk_ASN1_TYPE_freefunc_thunk))
-#define sk_ASN1_TYPE_new_null() \
-    ((STACK_OF(ASN1_TYPE) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_null(), \
-                sk_ASN1_TYPE_cmpfunc_thunk), \
-            sk_ASN1_TYPE_copyfunc_thunk), \
-        sk_ASN1_TYPE_freefunc_thunk))
-#define sk_ASN1_TYPE_new_reserve(cmp, n) \
-    ((STACK_OF(ASN1_TYPE) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_reserve(ossl_check_ASN1_TYPE_compfunc_type(cmp), (n)), \
-                sk_ASN1_TYPE_cmpfunc_thunk), \
-            sk_ASN1_TYPE_copyfunc_thunk), \
-        sk_ASN1_TYPE_freefunc_thunk))
+#define sk_ASN1_TYPE_new(cmp) ((STACK_OF(ASN1_TYPE) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new(ossl_check_ASN1_TYPE_compfunc_type(cmp)), sk_ASN1_TYPE_cmpfunc_thunk))
+#define sk_ASN1_TYPE_new_null() ((STACK_OF(ASN1_TYPE) *)OPENSSL_sk_set_thunks(OPENSSL_sk_new_null(), sk_ASN1_TYPE_freefunc_thunk))
+#define sk_ASN1_TYPE_new_reserve(cmp, n) ((STACK_OF(ASN1_TYPE) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new_reserve(ossl_check_ASN1_TYPE_compfunc_type(cmp), (n)), sk_ASN1_TYPE_cmpfunc_thunk))
 #define sk_ASN1_TYPE_reserve(sk, n) OPENSSL_sk_reserve(ossl_check_ASN1_TYPE_sk_type(sk), (n))
 #define sk_ASN1_TYPE_free(sk) OPENSSL_sk_free(ossl_check_ASN1_TYPE_sk_type(sk))
 #define sk_ASN1_TYPE_zero(sk) OPENSSL_sk_zero(ossl_check_ASN1_TYPE_sk_type(sk))
@@ -642,25 +542,8 @@ SKM_DEFINE_STACK_OF_INTERNAL(ASN1_TYPE, ASN1_TYPE, ASN1_TYPE)
 #define sk_ASN1_TYPE_find_all(sk, ptr, pnum) OPENSSL_sk_find_all(ossl_check_ASN1_TYPE_sk_type(sk), ossl_check_ASN1_TYPE_type(ptr), pnum)
 #define sk_ASN1_TYPE_sort(sk) OPENSSL_sk_sort(ossl_check_ASN1_TYPE_sk_type(sk))
 #define sk_ASN1_TYPE_is_sorted(sk) OPENSSL_sk_is_sorted(ossl_check_const_ASN1_TYPE_sk_type(sk))
-#define sk_ASN1_TYPE_dup(sk) \
-    ((STACK_OF(ASN1_TYPE) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_dup(ossl_check_const_ASN1_TYPE_sk_type(sk)), \
-                sk_ASN1_TYPE_cmpfunc_thunk), \
-            sk_ASN1_TYPE_copyfunc_thunk), \
-        sk_ASN1_TYPE_freefunc_thunk))
-#define sk_ASN1_TYPE_deep_copy(sk, copyfunc, freefunc) \
-    ((STACK_OF(ASN1_TYPE) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_deep_copy( \
-                    ossl_check_const_ASN1_TYPE_sk_type(sk), \
-                    ossl_check_ASN1_TYPE_copyfunc_type(copyfunc), \
-                    ossl_check_ASN1_TYPE_freefunc_type(freefunc)), \
-                sk_ASN1_TYPE_cmpfunc_thunk), \
-            sk_ASN1_TYPE_copyfunc_thunk), \
-        sk_ASN1_TYPE_freefunc_thunk))
+#define sk_ASN1_TYPE_dup(sk) ((STACK_OF(ASN1_TYPE) *)OPENSSL_sk_dup(ossl_check_const_ASN1_TYPE_sk_type(sk)))
+#define sk_ASN1_TYPE_deep_copy(sk, copyfunc, freefunc) ((STACK_OF(ASN1_TYPE) *)OPENSSL_sk_deep_copy(ossl_check_const_ASN1_TYPE_sk_type(sk), ossl_check_ASN1_TYPE_copyfunc_type(copyfunc), ossl_check_ASN1_TYPE_freefunc_type(freefunc)))
 #define sk_ASN1_TYPE_set_cmp_func(sk, cmp) ((sk_ASN1_TYPE_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_ASN1_TYPE_sk_type(sk), ossl_check_ASN1_TYPE_compfunc_type(cmp)))
 
 /* clang-format on */
@@ -704,30 +587,9 @@ void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t);
 SKM_DEFINE_STACK_OF_INTERNAL(ASN1_OBJECT, ASN1_OBJECT, ASN1_OBJECT)
 #define sk_ASN1_OBJECT_num(sk) OPENSSL_sk_num(ossl_check_const_ASN1_OBJECT_sk_type(sk))
 #define sk_ASN1_OBJECT_value(sk, idx) ((ASN1_OBJECT *)OPENSSL_sk_value(ossl_check_const_ASN1_OBJECT_sk_type(sk), (idx)))
-#define sk_ASN1_OBJECT_new(cmp) \
-    ((STACK_OF(ASN1_OBJECT) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new(ossl_check_ASN1_OBJECT_compfunc_type(cmp)), \
-                sk_ASN1_OBJECT_cmpfunc_thunk), \
-            sk_ASN1_OBJECT_copyfunc_thunk), \
-        sk_ASN1_OBJECT_freefunc_thunk))
-#define sk_ASN1_OBJECT_new_null() \
-    ((STACK_OF(ASN1_OBJECT) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_null(), \
-                sk_ASN1_OBJECT_cmpfunc_thunk), \
-            sk_ASN1_OBJECT_copyfunc_thunk), \
-        sk_ASN1_OBJECT_freefunc_thunk))
-#define sk_ASN1_OBJECT_new_reserve(cmp, n) \
-    ((STACK_OF(ASN1_OBJECT) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_reserve(ossl_check_ASN1_OBJECT_compfunc_type(cmp), (n)), \
-                sk_ASN1_OBJECT_cmpfunc_thunk), \
-            sk_ASN1_OBJECT_copyfunc_thunk), \
-        sk_ASN1_OBJECT_freefunc_thunk))
+#define sk_ASN1_OBJECT_new(cmp) ((STACK_OF(ASN1_OBJECT) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new(ossl_check_ASN1_OBJECT_compfunc_type(cmp)), sk_ASN1_OBJECT_cmpfunc_thunk))
+#define sk_ASN1_OBJECT_new_null() ((STACK_OF(ASN1_OBJECT) *)OPENSSL_sk_set_thunks(OPENSSL_sk_new_null(), sk_ASN1_OBJECT_freefunc_thunk))
+#define sk_ASN1_OBJECT_new_reserve(cmp, n) ((STACK_OF(ASN1_OBJECT) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new_reserve(ossl_check_ASN1_OBJECT_compfunc_type(cmp), (n)), sk_ASN1_OBJECT_cmpfunc_thunk))
 #define sk_ASN1_OBJECT_reserve(sk, n) OPENSSL_sk_reserve(ossl_check_ASN1_OBJECT_sk_type(sk), (n))
 #define sk_ASN1_OBJECT_free(sk) OPENSSL_sk_free(ossl_check_ASN1_OBJECT_sk_type(sk))
 #define sk_ASN1_OBJECT_zero(sk) OPENSSL_sk_zero(ossl_check_ASN1_OBJECT_sk_type(sk))
@@ -745,25 +607,8 @@ SKM_DEFINE_STACK_OF_INTERNAL(ASN1_OBJECT, ASN1_OBJECT, ASN1_OBJECT)
 #define sk_ASN1_OBJECT_find_all(sk, ptr, pnum) OPENSSL_sk_find_all(ossl_check_ASN1_OBJECT_sk_type(sk), ossl_check_ASN1_OBJECT_type(ptr), pnum)
 #define sk_ASN1_OBJECT_sort(sk) OPENSSL_sk_sort(ossl_check_ASN1_OBJECT_sk_type(sk))
 #define sk_ASN1_OBJECT_is_sorted(sk) OPENSSL_sk_is_sorted(ossl_check_const_ASN1_OBJECT_sk_type(sk))
-#define sk_ASN1_OBJECT_dup(sk) \
-    ((STACK_OF(ASN1_OBJECT) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_dup(ossl_check_const_ASN1_OBJECT_sk_type(sk)), \
-                sk_ASN1_OBJECT_cmpfunc_thunk), \
-            sk_ASN1_OBJECT_copyfunc_thunk), \
-        sk_ASN1_OBJECT_freefunc_thunk))
-#define sk_ASN1_OBJECT_deep_copy(sk, copyfunc, freefunc) \
-    ((STACK_OF(ASN1_OBJECT) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_deep_copy( \
-                    ossl_check_const_ASN1_OBJECT_sk_type(sk), \
-                    ossl_check_ASN1_OBJECT_copyfunc_type(copyfunc), \
-                    ossl_check_ASN1_OBJECT_freefunc_type(freefunc)), \
-                sk_ASN1_OBJECT_cmpfunc_thunk), \
-            sk_ASN1_OBJECT_copyfunc_thunk), \
-        sk_ASN1_OBJECT_freefunc_thunk))
+#define sk_ASN1_OBJECT_dup(sk) ((STACK_OF(ASN1_OBJECT) *)OPENSSL_sk_dup(ossl_check_const_ASN1_OBJECT_sk_type(sk)))
+#define sk_ASN1_OBJECT_deep_copy(sk, copyfunc, freefunc) ((STACK_OF(ASN1_OBJECT) *)OPENSSL_sk_deep_copy(ossl_check_const_ASN1_OBJECT_sk_type(sk), ossl_check_ASN1_OBJECT_copyfunc_type(copyfunc), ossl_check_ASN1_OBJECT_freefunc_type(freefunc)))
 #define sk_ASN1_OBJECT_set_cmp_func(sk, cmp) ((sk_ASN1_OBJECT_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_ASN1_OBJECT_sk_type(sk), ossl_check_ASN1_OBJECT_compfunc_type(cmp)))
 
 /* clang-format on */
@@ -780,23 +625,14 @@ void ASN1_STRING_clear_free(ASN1_STRING *a);
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str);
 DECLARE_ASN1_DUP_FUNCTION(ASN1_STRING)
 ASN1_STRING *ASN1_STRING_type_new(int type);
-ASN1_STRING *ASN1_STRING_new_not_owned(int type, const uint8_t *data,
-    size_t length);
 int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b);
 /*
  * Since this is used to store all sorts of things, via macros, for now,
  * make its data void *
  */
-#if !defined(OPENSSL_NO_DEPRECATED_4_1)
-OSSL_DEPRECATEDIN_4_1_FOR(" Use ASN1_STRING_set_data() or ASN1_STRING_set_string() instead.")
 int ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
-OSSL_DEPRECATEDIN_4_1_FOR(" Use ASN1_STRING_length_ex() instead.")
-int ASN1_STRING_length(const ASN1_STRING *x);
-#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
-int ASN1_STRING_set_data(ASN1_STRING *str, const uint8_t *data, size_t len);
-int ASN1_STRING_set_string(ASN1_STRING *str, const char *cstring);
-size_t ASN1_STRING_length_ex(const ASN1_STRING *x);
+int ASN1_STRING_length(const ASN1_STRING *x);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 void ASN1_STRING_length_set(ASN1_STRING *x, int n);
 #endif
@@ -804,23 +640,17 @@ int ASN1_STRING_type(const ASN1_STRING *x);
 const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_BIT_STRING)
-#ifndef OPENSSL_NO_DEPRECATED_4_1
-OSSL_DEPRECATEDIN_4_1_FOR("use ASN1_BIT_STRING_set1()")
-int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a,
-    unsigned char *d, int length);
-#endif
+int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d, int length);
 int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
 int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
 int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
     const unsigned char *flags, int flags_len);
 
-#if !defined(OPENSSL_NO_DEPRECATED_4_1)
-OSSL_DEPRECATEDIN_4_1 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
+int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
     BIT_STRING_BITNAME *tbl, int indent);
-OSSL_DEPRECATEDIN_4_1 int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
-OSSL_DEPRECATEDIN_4_1 int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
+int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
+int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
     BIT_STRING_BITNAME *tbl);
-#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *abs, size_t *length,
     int *unused_bits);
 int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *abs, const uint8_t *data,
@@ -830,30 +660,9 @@ int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *abs, const uint8_t *data,
 SKM_DEFINE_STACK_OF_INTERNAL(ASN1_INTEGER, ASN1_INTEGER, ASN1_INTEGER)
 #define sk_ASN1_INTEGER_num(sk) OPENSSL_sk_num(ossl_check_const_ASN1_INTEGER_sk_type(sk))
 #define sk_ASN1_INTEGER_value(sk, idx) ((ASN1_INTEGER *)OPENSSL_sk_value(ossl_check_const_ASN1_INTEGER_sk_type(sk), (idx)))
-#define sk_ASN1_INTEGER_new(cmp) \
-    ((STACK_OF(ASN1_INTEGER) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new(ossl_check_ASN1_INTEGER_compfunc_type(cmp)), \
-                sk_ASN1_INTEGER_cmpfunc_thunk), \
-            sk_ASN1_INTEGER_copyfunc_thunk), \
-        sk_ASN1_INTEGER_freefunc_thunk))
-#define sk_ASN1_INTEGER_new_null() \
-    ((STACK_OF(ASN1_INTEGER) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_null(), \
-                sk_ASN1_INTEGER_cmpfunc_thunk), \
-            sk_ASN1_INTEGER_copyfunc_thunk), \
-        sk_ASN1_INTEGER_freefunc_thunk))
-#define sk_ASN1_INTEGER_new_reserve(cmp, n) \
-    ((STACK_OF(ASN1_INTEGER) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_reserve(ossl_check_ASN1_INTEGER_compfunc_type(cmp), (n)), \
-                sk_ASN1_INTEGER_cmpfunc_thunk), \
-            sk_ASN1_INTEGER_copyfunc_thunk), \
-        sk_ASN1_INTEGER_freefunc_thunk))
+#define sk_ASN1_INTEGER_new(cmp) ((STACK_OF(ASN1_INTEGER) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new(ossl_check_ASN1_INTEGER_compfunc_type(cmp)), sk_ASN1_INTEGER_cmpfunc_thunk))
+#define sk_ASN1_INTEGER_new_null() ((STACK_OF(ASN1_INTEGER) *)OPENSSL_sk_set_thunks(OPENSSL_sk_new_null(), sk_ASN1_INTEGER_freefunc_thunk))
+#define sk_ASN1_INTEGER_new_reserve(cmp, n) ((STACK_OF(ASN1_INTEGER) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new_reserve(ossl_check_ASN1_INTEGER_compfunc_type(cmp), (n)), sk_ASN1_INTEGER_cmpfunc_thunk))
 #define sk_ASN1_INTEGER_reserve(sk, n) OPENSSL_sk_reserve(ossl_check_ASN1_INTEGER_sk_type(sk), (n))
 #define sk_ASN1_INTEGER_free(sk) OPENSSL_sk_free(ossl_check_ASN1_INTEGER_sk_type(sk))
 #define sk_ASN1_INTEGER_zero(sk) OPENSSL_sk_zero(ossl_check_ASN1_INTEGER_sk_type(sk))
@@ -871,25 +680,8 @@ SKM_DEFINE_STACK_OF_INTERNAL(ASN1_INTEGER, ASN1_INTEGER, ASN1_INTEGER)
 #define sk_ASN1_INTEGER_find_all(sk, ptr, pnum) OPENSSL_sk_find_all(ossl_check_ASN1_INTEGER_sk_type(sk), ossl_check_ASN1_INTEGER_type(ptr), pnum)
 #define sk_ASN1_INTEGER_sort(sk) OPENSSL_sk_sort(ossl_check_ASN1_INTEGER_sk_type(sk))
 #define sk_ASN1_INTEGER_is_sorted(sk) OPENSSL_sk_is_sorted(ossl_check_const_ASN1_INTEGER_sk_type(sk))
-#define sk_ASN1_INTEGER_dup(sk) \
-    ((STACK_OF(ASN1_INTEGER) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_dup(ossl_check_const_ASN1_INTEGER_sk_type(sk)), \
-                sk_ASN1_INTEGER_cmpfunc_thunk), \
-            sk_ASN1_INTEGER_copyfunc_thunk), \
-        sk_ASN1_INTEGER_freefunc_thunk))
-#define sk_ASN1_INTEGER_deep_copy(sk, copyfunc, freefunc) \
-    ((STACK_OF(ASN1_INTEGER) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_deep_copy( \
-                    ossl_check_const_ASN1_INTEGER_sk_type(sk), \
-                    ossl_check_ASN1_INTEGER_copyfunc_type(copyfunc), \
-                    ossl_check_ASN1_INTEGER_freefunc_type(freefunc)), \
-                sk_ASN1_INTEGER_cmpfunc_thunk), \
-            sk_ASN1_INTEGER_copyfunc_thunk), \
-        sk_ASN1_INTEGER_freefunc_thunk))
+#define sk_ASN1_INTEGER_dup(sk) ((STACK_OF(ASN1_INTEGER) *)OPENSSL_sk_dup(ossl_check_const_ASN1_INTEGER_sk_type(sk)))
+#define sk_ASN1_INTEGER_deep_copy(sk, copyfunc, freefunc) ((STACK_OF(ASN1_INTEGER) *)OPENSSL_sk_deep_copy(ossl_check_const_ASN1_INTEGER_sk_type(sk), ossl_check_ASN1_INTEGER_copyfunc_type(copyfunc), ossl_check_ASN1_INTEGER_freefunc_type(freefunc)))
 #define sk_ASN1_INTEGER_set_cmp_func(sk, cmp) ((sk_ASN1_INTEGER_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_ASN1_INTEGER_sk_type(sk), ossl_check_ASN1_INTEGER_compfunc_type(cmp)))
 
 /* clang-format on */
@@ -931,30 +723,9 @@ int ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *str, const unsigned char *data,
 SKM_DEFINE_STACK_OF_INTERNAL(ASN1_UTF8STRING, ASN1_UTF8STRING, ASN1_UTF8STRING)
 #define sk_ASN1_UTF8STRING_num(sk) OPENSSL_sk_num(ossl_check_const_ASN1_UTF8STRING_sk_type(sk))
 #define sk_ASN1_UTF8STRING_value(sk, idx) ((ASN1_UTF8STRING *)OPENSSL_sk_value(ossl_check_const_ASN1_UTF8STRING_sk_type(sk), (idx)))
-#define sk_ASN1_UTF8STRING_new(cmp) \
-    ((STACK_OF(ASN1_UTF8STRING) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new(ossl_check_ASN1_UTF8STRING_compfunc_type(cmp)), \
-                sk_ASN1_UTF8STRING_cmpfunc_thunk), \
-            sk_ASN1_UTF8STRING_copyfunc_thunk), \
-        sk_ASN1_UTF8STRING_freefunc_thunk))
-#define sk_ASN1_UTF8STRING_new_null() \
-    ((STACK_OF(ASN1_UTF8STRING) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_null(), \
-                sk_ASN1_UTF8STRING_cmpfunc_thunk), \
-            sk_ASN1_UTF8STRING_copyfunc_thunk), \
-        sk_ASN1_UTF8STRING_freefunc_thunk))
-#define sk_ASN1_UTF8STRING_new_reserve(cmp, n) \
-    ((STACK_OF(ASN1_UTF8STRING) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_reserve(ossl_check_ASN1_UTF8STRING_compfunc_type(cmp), (n)), \
-                sk_ASN1_UTF8STRING_cmpfunc_thunk), \
-            sk_ASN1_UTF8STRING_copyfunc_thunk), \
-        sk_ASN1_UTF8STRING_freefunc_thunk))
+#define sk_ASN1_UTF8STRING_new(cmp) ((STACK_OF(ASN1_UTF8STRING) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new(ossl_check_ASN1_UTF8STRING_compfunc_type(cmp)), sk_ASN1_UTF8STRING_cmpfunc_thunk))
+#define sk_ASN1_UTF8STRING_new_null() ((STACK_OF(ASN1_UTF8STRING) *)OPENSSL_sk_set_thunks(OPENSSL_sk_new_null(), sk_ASN1_UTF8STRING_freefunc_thunk))
+#define sk_ASN1_UTF8STRING_new_reserve(cmp, n) ((STACK_OF(ASN1_UTF8STRING) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new_reserve(ossl_check_ASN1_UTF8STRING_compfunc_type(cmp), (n)), sk_ASN1_UTF8STRING_cmpfunc_thunk))
 #define sk_ASN1_UTF8STRING_reserve(sk, n) OPENSSL_sk_reserve(ossl_check_ASN1_UTF8STRING_sk_type(sk), (n))
 #define sk_ASN1_UTF8STRING_free(sk) OPENSSL_sk_free(ossl_check_ASN1_UTF8STRING_sk_type(sk))
 #define sk_ASN1_UTF8STRING_zero(sk) OPENSSL_sk_zero(ossl_check_ASN1_UTF8STRING_sk_type(sk))
@@ -972,25 +743,8 @@ SKM_DEFINE_STACK_OF_INTERNAL(ASN1_UTF8STRING, ASN1_UTF8STRING, ASN1_UTF8STRING)
 #define sk_ASN1_UTF8STRING_find_all(sk, ptr, pnum) OPENSSL_sk_find_all(ossl_check_ASN1_UTF8STRING_sk_type(sk), ossl_check_ASN1_UTF8STRING_type(ptr), pnum)
 #define sk_ASN1_UTF8STRING_sort(sk) OPENSSL_sk_sort(ossl_check_ASN1_UTF8STRING_sk_type(sk))
 #define sk_ASN1_UTF8STRING_is_sorted(sk) OPENSSL_sk_is_sorted(ossl_check_const_ASN1_UTF8STRING_sk_type(sk))
-#define sk_ASN1_UTF8STRING_dup(sk) \
-    ((STACK_OF(ASN1_UTF8STRING) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_dup(ossl_check_const_ASN1_UTF8STRING_sk_type(sk)), \
-                sk_ASN1_UTF8STRING_cmpfunc_thunk), \
-            sk_ASN1_UTF8STRING_copyfunc_thunk), \
-        sk_ASN1_UTF8STRING_freefunc_thunk))
-#define sk_ASN1_UTF8STRING_deep_copy(sk, copyfunc, freefunc) \
-    ((STACK_OF(ASN1_UTF8STRING) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_deep_copy( \
-                    ossl_check_const_ASN1_UTF8STRING_sk_type(sk), \
-                    ossl_check_ASN1_UTF8STRING_copyfunc_type(copyfunc), \
-                    ossl_check_ASN1_UTF8STRING_freefunc_type(freefunc)), \
-                sk_ASN1_UTF8STRING_cmpfunc_thunk), \
-            sk_ASN1_UTF8STRING_copyfunc_thunk), \
-        sk_ASN1_UTF8STRING_freefunc_thunk))
+#define sk_ASN1_UTF8STRING_dup(sk) ((STACK_OF(ASN1_UTF8STRING) *)OPENSSL_sk_dup(ossl_check_const_ASN1_UTF8STRING_sk_type(sk)))
+#define sk_ASN1_UTF8STRING_deep_copy(sk, copyfunc, freefunc) ((STACK_OF(ASN1_UTF8STRING) *)OPENSSL_sk_deep_copy(ossl_check_const_ASN1_UTF8STRING_sk_type(sk), ossl_check_ASN1_UTF8STRING_copyfunc_type(copyfunc), ossl_check_ASN1_UTF8STRING_freefunc_type(freefunc)))
 #define sk_ASN1_UTF8STRING_set_cmp_func(sk, cmp) ((sk_ASN1_UTF8STRING_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_ASN1_UTF8STRING_sk_type(sk), ossl_check_ASN1_UTF8STRING_compfunc_type(cmp)))
 
 /* clang-format on */
@@ -1001,39 +755,16 @@ DECLARE_ASN1_FUNCTIONS(ASN1_UTF8STRING)
 DECLARE_ASN1_FUNCTIONS(ASN1_NULL)
 DECLARE_ASN1_FUNCTIONS(ASN1_BMPSTRING)
 
-#if !defined(OPENSSL_NO_DEPRECATED_4_1)
-OSSL_DEPRECATEDIN_4_1 int UTF8_getc(const unsigned char *str, int len, unsigned long *val);
-OSSL_DEPRECATEDIN_4_1 int UTF8_putc(unsigned char *str, int len, unsigned long value);
-#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
+int UTF8_getc(const unsigned char *str, int len, unsigned long *val);
+int UTF8_putc(unsigned char *str, int len, unsigned long value);
 
 /* clang-format off */
 SKM_DEFINE_STACK_OF_INTERNAL(ASN1_GENERALSTRING, ASN1_GENERALSTRING, ASN1_GENERALSTRING)
 #define sk_ASN1_GENERALSTRING_num(sk) OPENSSL_sk_num(ossl_check_const_ASN1_GENERALSTRING_sk_type(sk))
 #define sk_ASN1_GENERALSTRING_value(sk, idx) ((ASN1_GENERALSTRING *)OPENSSL_sk_value(ossl_check_const_ASN1_GENERALSTRING_sk_type(sk), (idx)))
-#define sk_ASN1_GENERALSTRING_new(cmp) \
-    ((STACK_OF(ASN1_GENERALSTRING) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new(ossl_check_ASN1_GENERALSTRING_compfunc_type(cmp)), \
-                sk_ASN1_GENERALSTRING_cmpfunc_thunk), \
-            sk_ASN1_GENERALSTRING_copyfunc_thunk), \
-        sk_ASN1_GENERALSTRING_freefunc_thunk))
-#define sk_ASN1_GENERALSTRING_new_null() \
-    ((STACK_OF(ASN1_GENERALSTRING) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_null(), \
-                sk_ASN1_GENERALSTRING_cmpfunc_thunk), \
-            sk_ASN1_GENERALSTRING_copyfunc_thunk), \
-        sk_ASN1_GENERALSTRING_freefunc_thunk))
-#define sk_ASN1_GENERALSTRING_new_reserve(cmp, n) \
-    ((STACK_OF(ASN1_GENERALSTRING) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_new_reserve(ossl_check_ASN1_GENERALSTRING_compfunc_type(cmp), (n)), \
-                sk_ASN1_GENERALSTRING_cmpfunc_thunk), \
-            sk_ASN1_GENERALSTRING_copyfunc_thunk), \
-        sk_ASN1_GENERALSTRING_freefunc_thunk))
+#define sk_ASN1_GENERALSTRING_new(cmp) ((STACK_OF(ASN1_GENERALSTRING) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new(ossl_check_ASN1_GENERALSTRING_compfunc_type(cmp)), sk_ASN1_GENERALSTRING_cmpfunc_thunk))
+#define sk_ASN1_GENERALSTRING_new_null() ((STACK_OF(ASN1_GENERALSTRING) *)OPENSSL_sk_set_thunks(OPENSSL_sk_new_null(), sk_ASN1_GENERALSTRING_freefunc_thunk))
+#define sk_ASN1_GENERALSTRING_new_reserve(cmp, n) ((STACK_OF(ASN1_GENERALSTRING) *)OPENSSL_sk_set_cmp_thunks(OPENSSL_sk_new_reserve(ossl_check_ASN1_GENERALSTRING_compfunc_type(cmp), (n)), sk_ASN1_GENERALSTRING_cmpfunc_thunk))
 #define sk_ASN1_GENERALSTRING_reserve(sk, n) OPENSSL_sk_reserve(ossl_check_ASN1_GENERALSTRING_sk_type(sk), (n))
 #define sk_ASN1_GENERALSTRING_free(sk) OPENSSL_sk_free(ossl_check_ASN1_GENERALSTRING_sk_type(sk))
 #define sk_ASN1_GENERALSTRING_zero(sk) OPENSSL_sk_zero(ossl_check_ASN1_GENERALSTRING_sk_type(sk))
@@ -1051,25 +782,8 @@ SKM_DEFINE_STACK_OF_INTERNAL(ASN1_GENERALSTRING, ASN1_GENERALSTRING, ASN1_GENERA
 #define sk_ASN1_GENERALSTRING_find_all(sk, ptr, pnum) OPENSSL_sk_find_all(ossl_check_ASN1_GENERALSTRING_sk_type(sk), ossl_check_ASN1_GENERALSTRING_type(ptr), pnum)
 #define sk_ASN1_GENERALSTRING_sort(sk) OPENSSL_sk_sort(ossl_check_ASN1_GENERALSTRING_sk_type(sk))
 #define sk_ASN1_GENERALSTRING_is_sorted(sk) OPENSSL_sk_is_sorted(ossl_check_const_ASN1_GENERALSTRING_sk_type(sk))
-#define sk_ASN1_GENERALSTRING_dup(sk) \
-    ((STACK_OF(ASN1_GENERALSTRING) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_dup(ossl_check_const_ASN1_GENERALSTRING_sk_type(sk)), \
-                sk_ASN1_GENERALSTRING_cmpfunc_thunk), \
-            sk_ASN1_GENERALSTRING_copyfunc_thunk), \
-        sk_ASN1_GENERALSTRING_freefunc_thunk))
-#define sk_ASN1_GENERALSTRING_deep_copy(sk, copyfunc, freefunc) \
-    ((STACK_OF(ASN1_GENERALSTRING) *)OPENSSL_sk_set_thunks( \
-        OPENSSL_sk_set_copy_thunks( \
-            OPENSSL_sk_set_cmp_thunks( \
-                OPENSSL_sk_deep_copy( \
-                    ossl_check_const_ASN1_GENERALSTRING_sk_type(sk), \
-                    ossl_check_ASN1_GENERALSTRING_copyfunc_type(copyfunc), \
-                    ossl_check_ASN1_GENERALSTRING_freefunc_type(freefunc)), \
-                sk_ASN1_GENERALSTRING_cmpfunc_thunk), \
-            sk_ASN1_GENERALSTRING_copyfunc_thunk), \
-        sk_ASN1_GENERALSTRING_freefunc_thunk))
+#define sk_ASN1_GENERALSTRING_dup(sk) ((STACK_OF(ASN1_GENERALSTRING) *)OPENSSL_sk_dup(ossl_check_const_ASN1_GENERALSTRING_sk_type(sk)))
+#define sk_ASN1_GENERALSTRING_deep_copy(sk, copyfunc, freefunc) ((STACK_OF(ASN1_GENERALSTRING) *)OPENSSL_sk_deep_copy(ossl_check_const_ASN1_GENERALSTRING_sk_type(sk), ossl_check_ASN1_GENERALSTRING_copyfunc_type(copyfunc), ossl_check_ASN1_GENERALSTRING_freefunc_type(freefunc)))
 #define sk_ASN1_GENERALSTRING_set_cmp_func(sk, cmp) ((sk_ASN1_GENERALSTRING_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_ASN1_GENERALSTRING_sk_type(sk), ossl_check_ASN1_GENERALSTRING_compfunc_type(cmp)))
 
 /* clang-format on */

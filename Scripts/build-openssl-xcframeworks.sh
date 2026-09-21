@@ -218,6 +218,13 @@ xcodebuild -create-xcframework \
 for slice_dir in "$OUTPUT_DIR/OpenSSLCrypto.xcframework"/*/Headers; do
   cat >"$slice_dir/module.modulemap" <<'MMAP'
 module OpenSSLCrypto {
+    // `macros.h` includes `opensslconf.h` (OpenSSL 4.0 onwards; 4.1.0-dev reached `configuration.h`
+    // directly). With `opensslconf.h` modular and `macros.h` textual, the module's copy of `macros.h`
+    // exports `OPENSSL_API_LEVEL` back into the textual pass, which then trips the
+    // "must not be defined by application" guard. Keeping all four in the module avoids the mix.
+    header "openssl/configuration.h"
+    header "openssl/macros.h"
+    header "openssl/opensslv.h"
     header "openssl/opensslconf.h"
     header "openssl/ossl_typ.h"
     header "openssl/obj_mac.h"
