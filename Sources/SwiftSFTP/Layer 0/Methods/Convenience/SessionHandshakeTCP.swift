@@ -3,6 +3,23 @@ import Foundation
 /// A connected socket descriptor used by libssh2 session handshakes.
 public typealias SwiftSFTPSocket = Int32
 
+/// Shuts a socket descriptor down in both directions without releasing the descriptor.
+///
+/// Unlike ``CloseSocket(_:)``, this is safe to call while another thread is blocked inside libssh2 on the same
+/// descriptor: it wakes that thread with an error instead of handing the number straight back to the next socket the
+/// process opens. A descriptor the peer already dropped reports `ENOTCONN`, which is treated as success.
+///
+/// - Parameter socket: The socket descriptor to shut down.
+/// - Throws: `POSIXError` when the descriptor could not be shut down.
+public func ShutdownSocket(_ socket: SwiftSFTPSocket) throws {
+    guard shutdown(socket, SHUT_RDWR) == 0 else {
+        if errno == ENOTCONN {
+            return
+        }
+        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+    }
+}
+
 /// Closes a socket descriptor returned by ``SessionHandshakeTCP(session:host:port:)``.
 public func CloseSocket(_ socket: SwiftSFTPSocket) throws {
     guard close(socket) == 0 else {

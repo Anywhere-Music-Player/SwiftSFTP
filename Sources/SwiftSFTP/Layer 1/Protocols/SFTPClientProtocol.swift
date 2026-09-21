@@ -73,7 +73,20 @@ public protocol SFTPClientProtocol: Identifiable, Sendable, AnyObject {
     /// Calling `close()` more than once is allowed by the concrete implementation; later calls log a warning and
     /// return.
     ///
-    /// - Throws: libssh2/socket errors encountered while shutting down.
+    /// The polite SSH/SFTP goodbye needs the peer to answer, so the concrete implementation gives it a short grace
+    /// period and then drops the socket regardless. That keeps `close()` bounded on a connection that has stopped
+    /// responding, where every byte the goodbye waits for is about to be discarded anyway. Two consequences worth
+    /// knowing:
+    ///
+    /// - `close()` works even while another task is still blocked inside libssh2 on this session. It shuts the socket
+    /// down, which unblocks that call with an error rather than waiting for it.
+    /// - Once the socket is gone, the server tears down its side of the channel, including file handles opened on it.
+    /// Closing handles individually first is tidier, but it is not what makes the cleanup correct.
+    ///
+    /// Failures of the graceful phase are logged rather than thrown; a successful return means every libssh2 and
+    /// socket resource was released.
+    ///
+    /// - Throws: libssh2/socket errors encountered while releasing resources.
     func close() async throws
 
     /// Whether the client has been closed.
@@ -113,6 +126,24 @@ public protocol SFTPClientProtocol: Identifiable, Sendable, AnyObject {
     /// Non-positive numbers will be ignored, set to infinity to disable timeout. Silent no-op if the session was
     /// previously closed
     var timeout: TimeInterval { get set }
+
+    /// Seconds the polite SSH/SFTP goodbye may take before ``close()`` drops the connection outright. Defaults to one
+    /// second.
+    ///
+    /// A graceful shutdown needs the peer to answer, and a peer that stopped answering reads and writes will not
+    /// answer that either. This caps how long ``close()`` and ``SFTPFileProtocol/close()`` wait for it, so teardown
+    /// stays bounded on a wedged connection instead of spending one `operationsTimeOut` per step. Cutting the goodbye
+    /// short costs nothing: dropping the socket is what releases the connection, and the server tears down its side of
+    /// the channel when it does.
+    ///
+    /// Raise it for links slow enough that a legitimate goodbye needs longer, or set it to `.infinity` to switch the
+    /// cap off entirely and let the goodbye run under `operationsTimeOut` alone, as it did before the cap existed.
+    /// Non-positive values and NaN are ignored. A client created by ``fork(loggedIn:)`` inherits the current value.
+    ///
+    /// > Warning: With `.infinity`, ``close()`` no longer drops the socket to get past a call that is still blocked
+    /// inside libssh2; it waits for it. Combined with an `operationsTimeOut` of `nil` that means `close()` can block
+    /// for as long as the peer stays silent.
+    var teardownGracePeriod: TimeInterval { get set }
 
     /// Enables, reconfigures, or disables periodic SSH keepalive messages.
     ///

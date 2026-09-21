@@ -18,9 +18,13 @@ public protocol SFTPFileProtocol: Sendable, Identifiable, AnyObject {
     /// The concrete implementation reads in chunks of at most 32 KiB and returns early at EOF. A positive request that
     /// reaches EOF before reading any bytes returns `nil`; requesting `0` bytes returns `nil`.
     ///
+    /// The concrete implementation honors Swift task cancellation even while the server has gone silent, without
+    /// waiting out `operationsTimeOut`. Bytes already read are returned as a short read, because they have already
+    /// advanced the remote file position; `CancellationError` is thrown only when nothing was read.
+    ///
     /// - Parameter upTo: Maximum number of bytes to read. Must be greater than zero.
     /// - Returns: Data read from the file, or `nil` at EOF or when `upTo` is zero.
-    /// - Throws: ``AlreadyClosed`` or libssh2/SFTP errors.
+    /// - Throws: `CancellationError`, ``AlreadyClosed``, or libssh2/SFTP errors.
     func read(upTo: Int) async throws -> Data?
 
     /// Writes data at the current file position.
@@ -29,9 +33,13 @@ public protocol SFTPFileProtocol: Sendable, Identifiable, AnyObject {
     /// writes, the returned value is the number of bytes actually accepted before completion or before a zero-byte
     /// write makes no forward progress.
     ///
+    /// The concrete implementation honors Swift task cancellation even while the server has gone silent, without
+    /// waiting out `operationsTimeOut`. A cancelled write throws `CancellationError` after leaving whatever chunks it
+    /// already sent on the remote file, so the remote size is the resume point.
+    ///
     /// - Parameter data: Bytes to write.
     /// - Returns: Number of bytes accepted by libssh2.
-    /// - Throws: ``AlreadyClosed`` or libssh2/SFTP errors.
+    /// - Throws: `CancellationError`, ``AlreadyClosed``, or libssh2/SFTP errors.
     @discardableResult func write(_ data: Data) async throws -> Int
 
     /// Requests that the server synchronize the remote file to stable storage.
@@ -48,6 +56,13 @@ public protocol SFTPFileProtocol: Sendable, Identifiable, AnyObject {
     ///
     /// Calling `close()` more than once is allowed by the concrete implementation; later calls log a warning and
     /// return.
+    ///
+    /// Unlike the I/O methods, the concrete implementation deliberately ignores Swift task cancellation: `close()`
+    /// almost always runs on an already-cancelled task, and honoring cancellation there would skip the close and leave
+    /// the remote handle open. `SSH_FXP_CLOSE` still needs an answer the server may never send, so the wait is capped
+    /// at a short grace period rather than the session's `operationsTimeOut`, and is skipped altogether once another
+    /// call has already given up on the peer. A handle whose close did not complete is released when the session is
+    /// torn down by ``SFTPClientProtocol/close()``.
     ///
     /// - Throws: libssh2/SFTP errors encountered while closing.
     func close() async throws

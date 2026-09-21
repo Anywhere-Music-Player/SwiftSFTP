@@ -30,11 +30,18 @@ public final class SFTPClient: SFTPClientProtocol {
     let authentication: UserAuthentication
     /// The most recent timeout configured by `login(timeOut:)`. Protected by `internalStateQueue`.
     private nonisolated(unsafe) var loginTimeOut: TimeInterval = 10.0
+    /// Backing storage for ``teardownGracePeriod``. Protected by `internalStateQueue`.
+    private nonisolated(unsafe) var _teardownGracePeriod: TimeInterval = 1.0
 
     // MARK: Concurrency
 
     private let internalStateQueue = DispatchQueue(label: "com.ruinelson.SwiftSFTP.SFTPFile.InternalState")
     private let sessionIOLock = NSRecursiveLock()
+    /// Whether the last blocking call gave up waiting for the peer. Guarded by `sessionIOLock`.
+    private nonisolated(unsafe) var _peerStoppedResponding = false
+    /// Serial queue that owns blocking libssh2 calls made from `async` code, keeping them off the Swift cooperative
+    /// pool. See ``withCancellableSessionIO(_:)``.
+    let sessionIOQueue = DispatchQueue(label: "com.ruinelson.SwiftSFTP.SFTPClient.SessionIO")
 
     // MARK: Initialization
 
@@ -326,35 +333,11 @@ public extension SFTPClient {
 
         resources.keepAliveTask?.cancel()
 
-        try withSessionIO {
-            var firstError: Error?
-
-            if let sftpSession = resources.sftp {
-                do { try SFTPShutdown(sftp: sftpSession) }
-                catch { firstError = firstError ?? error }
-            }
-
-            if let knownHosts = resources.knownHosts {
-                KnownHostFree(hosts: knownHosts)
-            }
-
-            do { try SessionDisconnect(session: session, description: "Session disconnected on behalf of the user") }
-            catch { firstError = firstError ?? error }
-
-            do { try SessionFree(session: session) }
-            catch { firstError = firstError ?? error }
-            // Always balance the SSHInit from init, even when SessionFree fails.
-            SSHExit()
-
-            if let socket = resources.socket {
-                do { try CloseSocket(socket) }
-                catch { firstError = firstError ?? error }
-            }
-
-            logger?.trace("SFTPClient closed successfully")
-
-            if let firstError {
-                throw firstError
+        // Not the session-I/O queue: a transfer still blocked in libssh2 owns that queue, and the teardown below is
+        // precisely what has to get past it.
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+            DispatchQueue.global().async {
+                continuation.resume(with: Result { try self.teardown(resources) })
             }
         }
     }
@@ -382,6 +365,7 @@ public extension SFTPClient {
 
         instance.internalStateQueue.sync {
             instance.loginTimeOut = loginTimeOut
+            instance._teardownGracePeriod = teardownGracePeriod
         }
 
         guard loggedIn else {
@@ -848,6 +832,168 @@ extension SFTPClient {
 
         if status {
             throw AlreadyClosed()
+        }
+    }
+}
+
+// MARK: Bounded teardown
+
+public extension SFTPClient {
+    var teardownGracePeriod: TimeInterval {
+        get {
+            internalStateQueue.sync {
+                _teardownGracePeriod
+            }
+        }
+        set {
+            // `+infinity` opts out of the cap: the goodbye then runs under `operationsTimeOut` alone, as it did before
+            // the cap existed. Non-positive values and NaN are ignored.
+            guard newValue > 0 else {
+                return
+            }
+
+            internalStateQueue.sync {
+                _teardownGracePeriod = newValue
+            }
+        }
+    }
+}
+
+extension SFTPClient {
+    /// Milliseconds left of a grace budget, or `nil` once it is spent.
+    static func remainingGrace(until deadline: Date) -> Int? {
+        let remaining = Int(deadline.timeIntervalSinceNow * 1000)
+        return remaining > 0 ? remaining : nil
+    }
+
+    /// When the grace budget runs out, or `nil` when ``teardownGracePeriod`` is infinite and there is no cap.
+    var teardownDeadline: Date? {
+        let grace = teardownGracePeriod
+        return grace.isFinite ? Date().addingTimeInterval(grace) : nil
+    }
+
+    /// Records whether the peer answered the call that just finished. Callers must hold the session I/O lock.
+    ///
+    /// Once a call has given up waiting, there is no reason for ``close()`` to spend its grace period asking the same
+    /// unresponsive peer to say goodbye; it drops the connection straight away instead.
+    func notePeerResponded(_ responded: Bool) {
+        _peerStoppedResponding = !responded
+    }
+
+    /// Whether the last blocking call gave up waiting for the peer. Callers must hold the session I/O lock.
+    var peerStoppedResponding: Bool {
+        _peerStoppedResponding
+    }
+}
+
+private extension SFTPClient {
+    /// Releases every libssh2 and socket resource, giving the polite goodbye a bounded slice of time first.
+    ///
+    /// Correctness comes from dropping the socket, not from the goodbye: once the descriptor is shut down the server
+    /// tears down its side of the channel and any file handles opened on it. Failures of the graceful phase are
+    /// therefore logged rather than thrown — a successful `close()` means everything was released, which is now always
+    /// true by the time this returns.
+    func teardown(
+        _ resources: (
+            sftp: LibSSH2SFTP?,
+            knownHosts: LibSSH2KnownHosts?,
+            socket: SwiftSFTPSocket?,
+            keepAliveTask: Task<Void, Never>?
+        )
+    ) throws {
+        // `nil` means the cap is switched off, so every wait below falls back to `operationsTimeOut`.
+        let deadline = teardownDeadline
+
+        // Another thread may still be blocked inside libssh2 holding this lock. `shutdown()` is safe to call on its
+        // descriptor from here — unlike `close()`, which could hand the number to an unrelated new socket — and it
+        // wakes that thread with an error instead of waiting for it.
+        var politely = true
+        if let deadline {
+            politely = sessionIOLock.lock(before: deadline)
+            if !politely {
+                logger?.debug("Session busy at close; dropping the socket to unblock it")
+                if let socket = resources.socket {
+                    try? ShutdownSocket(socket)
+                }
+                sessionIOLock.lock()
+            }
+        }
+        else {
+            sessionIOLock.lock()
+        }
+        defer { sessionIOLock.unlock() }
+
+        if politely, let deadline {
+            if peerStoppedResponding {
+                logger?.debug("Peer already stopped responding; skipping the goodbye")
+                politely = false
+            }
+            else if Self.remainingGrace(until: deadline) == nil {
+                politely = false
+            }
+        }
+
+        if politely, let sftpSession = resources.sftp {
+            politely = attemptGracefully(before: deadline, "SFTP shutdown") {
+                try SFTPShutdown(sftp: sftpSession)
+            }
+        }
+
+        if politely {
+            _ = attemptGracefully(before: deadline, "session disconnect") {
+                try SessionDisconnect(session: session, description: "Session disconnected on behalf of the user")
+            }
+        }
+
+        if let knownHosts = resources.knownHosts {
+            KnownHostFree(hosts: knownHosts)
+        }
+
+        // From here on nothing may block: the socket goes down first so any libssh2 bookkeeping fails immediately.
+        if let socket = resources.socket {
+            try? ShutdownSocket(socket)
+        }
+
+        var firstError: Error?
+
+        do { try SessionFree(session: session) }
+        catch { firstError = firstError ?? error }
+        // Always balance the SSHInit from init, even when SessionFree fails.
+        SSHExit()
+
+        if let socket = resources.socket {
+            do { try CloseSocket(socket) }
+            catch { firstError = firstError ?? error }
+        }
+
+        logger?.trace("SFTPClient closed successfully")
+
+        if let firstError {
+            throw firstError
+        }
+    }
+
+    /// Runs one step of the polite goodbye within what is left of the grace budget.
+    ///
+    /// - Returns: `true` when the step completed, `false` when the budget is spent or the step failed, in which case
+    /// the caller skips the rest of the goodbye and drops the connection.
+    func attemptGracefully(before deadline: Date?, _ label: String, _ step: () throws -> Void) -> Bool {
+        if let deadline {
+            guard let remaining = Self.remainingGrace(until: deadline) else {
+                logger?.debug("Skipping \(label): teardown grace period already spent")
+                return false
+            }
+
+            SessionSetTimeout(session: session, timeoutMilliseconds: remaining)
+        }
+
+        do {
+            try step()
+            return true
+        }
+        catch {
+            logger?.debug("Giving up on \(label) during close: \(error)")
+            return false
         }
     }
 }

@@ -10,6 +10,10 @@ public extension SFTPClientProtocol {
     /// the remote file does not exist, this behaves as if `resume` were `false`. The created remote file is closed
     /// before this method returns, including when the transfer throws.
     ///
+    /// Cancelling the calling task stops the transfer promptly and throws `CancellationError`. The remote handle is
+    /// still closed on the way out, and that close ignores cancellation but is capped at a short grace period, so a
+    /// server that has stopped answering delays the return by that grace period rather than by `operationsTimeOut`.
+    ///
     /// - Parameters:
     ///   - localURL: Local file URL to upload.
     ///   - remotePath: Remote file path to create.
@@ -18,8 +22,9 @@ public extension SFTPClientProtocol {
     ///   - bufferSize: Maximum local read size per transfer step. Must be greater than zero.
     ///   - permissions: POSIX permissions to request when creating the remote file.
     ///   - continuation: Progress callback. Return `true` to continue, or `false` to cancel.
-    /// - Throws: ``FileTransferErrors`` for invalid local input, existing remote files, remote directory targets,
-    /// cancellation, invalid buffer sizes, or short writes; otherwise forwards SFTP errors.
+    /// - Throws: `CancellationError` when the calling task is cancelled; ``FileTransferErrors`` for invalid local
+    /// input, existing remote files, remote directory targets, a `continuation` that returned `false`, invalid buffer
+    /// sizes, or short writes; otherwise forwards SFTP errors.
     func upload(
         from localURL: URL,
         to remotePath: String,
@@ -84,6 +89,10 @@ public extension SFTPClientProtocol {
     /// exist, this behaves as if `resume` were `false`. The opened remote file is closed before this method returns,
     /// including when the transfer throws.
     ///
+    /// Cancelling the calling task stops the transfer promptly and throws `CancellationError`. The remote handle is
+    /// still closed on the way out, and that close ignores cancellation but is capped at a short grace period, so a
+    /// server that has stopped answering delays the return by that grace period rather than by `operationsTimeOut`.
+    ///
     /// - Parameters:
     ///   - remotePath: Existing remote regular-file path to download.
     ///   - localURL: Local file URL to create.
@@ -91,9 +100,9 @@ public extension SFTPClientProtocol {
     /// one exists.
     ///   - bufferSize: Maximum remote read size per transfer step. Must be greater than zero.
     ///   - continuation: Progress callback. Return `true` to continue, or `false` to cancel.
-    /// - Throws: ``FileTransferErrors`` for invalid local input, existing local destinations, directory destinations,
-    /// missing remote files, remote directory sources, cancellation, or invalid buffer sizes; otherwise forwards
-    /// `FileHandle` and SFTP errors.
+    /// - Throws: `CancellationError` when the calling task is cancelled; ``FileTransferErrors`` for invalid local
+    /// input, existing local destinations, directory destinations, missing remote files, remote directory sources, a
+    /// `continuation` that returned `false`, or invalid buffer sizes; otherwise forwards `FileHandle` and SFTP errors.
     func download(
         from remotePath: String,
         to localURL: URL,

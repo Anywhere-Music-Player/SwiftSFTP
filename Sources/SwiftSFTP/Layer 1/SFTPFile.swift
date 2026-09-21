@@ -44,6 +44,25 @@ private extension SFTPFile {
             throw AlreadyClosed()
         }
     }
+
+    /// Blocking timeout for `SSH_FXP_CLOSE`, given the session's currently configured one.
+    ///
+    /// An infinite ``SFTPClientProtocol/teardownGracePeriod`` switches the cap off, leaving the close bounded only by
+    /// `operationsTimeOut`. Otherwise the wait is capped at the grace period, and skipped near enough entirely once
+    /// another call has already given up on the peer.
+    func closeTimeoutMilliseconds(configured: Int) -> Int {
+        let grace = parent.teardownGracePeriod
+
+        guard grace.isFinite else {
+            return configured
+        }
+
+        if parent.peerStoppedResponding {
+            return 1
+        }
+
+        return configured == 0 ? grace.milliseconds : min(configured, grace.milliseconds)
+    }
 }
 
 // MARK: SFTPFileProtocol + Position and I/O
@@ -73,7 +92,7 @@ public extension SFTPFile {
     }
 
     func read(upTo: Int) async throws -> Data? {
-        try parent.withSessionIO {
+        try await parent.withCancellableSessionIO { [self] slice in
             try checkClosed()
 
             guard upTo > 0 else {
@@ -85,16 +104,25 @@ public extension SFTPFile {
             var bytesLeft = upTo
 
             while bytesLeft > 0 {
+                // Bytes already read have advanced the remote offset, so hand them back as a short read rather than
+                // dropping them; the caller observes cancellation on its next loop iteration.
+                if slice.token.isCancelled {
+                    guard buffer.isEmpty else {
+                        return buffer
+                    }
+                    throw CancellationError()
+                }
+
                 let bytesToRead = min(bytesLeft, Self.size32kB)
 
-                let slice = try SFTPRead(handle: handle, maximumLength: bytesToRead)
-                guard slice.isEmpty == false else {
+                let chunk = try slice { try SFTPRead(handle: handle, maximumLength: bytesToRead) }
+                guard chunk.isEmpty == false else {
                     break
                 }
 
-                buffer.append(slice)
+                buffer.append(chunk)
 
-                bytesLeft -= slice.count
+                bytesLeft -= chunk.count
             }
 
             return buffer.isEmpty ? nil : buffer
@@ -102,16 +130,18 @@ public extension SFTPFile {
     }
 
     @discardableResult func write(_ data: Data) async throws -> Int {
-        try parent.withSessionIO {
+        try await parent.withCancellableSessionIO { [self] slice in
             try checkClosed()
 
             var bytesWritten = 0
 
             while bytesWritten < data.count {
+                try slice.token.check()
+
                 // `data` may be a slice, so index from `startIndex` rather than zero.
                 let start = data.startIndex + bytesWritten
                 let end = min(start + Self.size32kB, data.endIndex)
-                let written = try SFTPWrite(handle: handle, data: data[start ..< end])
+                let written = try slice { try SFTPWrite(handle: handle, data: data[start ..< end]) }
 
                 guard written > 0 else {
                     break
@@ -129,9 +159,9 @@ public extension SFTPFile {
     }
 
     func fsync() async throws {
-        try parent.withSessionIO {
+        try await parent.withCancellableSessionIO { [self] slice in
             try checkClosed()
-            try SFTPFSync(handle: handle)
+            try slice { try SFTPFSync(handle: handle) }
         }
     }
 }
@@ -140,7 +170,7 @@ public extension SFTPFile {
 
 public extension SFTPFile {
     func close() async throws {
-        try parent.withSessionIO {
+        try await parent.withUninterruptibleSessionIO { [self] in
             try internalStateQueue.sync {
                 guard !_closed else {
                     logger?.warning("Trying to close file handle that was already closed")
@@ -149,9 +179,28 @@ public extension SFTPFile {
 
                 try parent.checkOpenForFileOperation()
 
-                // libssh2 frees the handle even when close fails, so mark closed first to prevent any further use.
+                // libssh2 frees the handle on every path that runs to completion, so mark closed first to prevent any
+                // further use.
                 _closed = true
-                try SFTPCloseHandle(handle: self.handle)
+
+                // `SSH_FXP_CLOSE` needs an answer the server may never send. Cap the wait: closing a handle is not
+                // worth one whole `operationsTimeOut` when the connection has stopped responding, and
+                // ``SFTPClient/close()`` releases what is left regardless.
+                let configured = SessionGetTimeout(session: parent.session)
+                let capped = closeTimeoutMilliseconds(configured: configured)
+                SessionSetTimeout(session: parent.session, timeoutMilliseconds: capped)
+                defer { SessionSetTimeout(session: parent.session, timeoutMilliseconds: configured) }
+
+                do {
+                    try SFTPCloseHandle(handle: self.handle)
+                    parent.notePeerResponded(true)
+                }
+                catch let error as LibSSH2Error {
+                    if case .timeout = error {
+                        parent.notePeerResponded(false)
+                    }
+                    throw error
+                }
             }
         }
     }
@@ -167,26 +216,26 @@ public extension SFTPFile {
 
 public extension SFTPFile {
     func set(_ attributes: FileAttributes) async throws {
-        try parent.withSessionIO {
+        try await parent.withCancellableSessionIO { [self] slice in
             try checkClosed()
-            try SFTPFSetStat(handle: handle, attributes: attributes)
+            try slice { try SFTPFSetStat(handle: handle, attributes: attributes) }
         }
     }
 
     var stat: FileAttributes {
         get async throws {
-            try parent.withSessionIO {
+            try await parent.withCancellableSessionIO { [self] slice in
                 try checkClosed()
-                return try SFTPFStat(handle: handle)
+                return try slice { try SFTPFStat(handle: handle) }
             }
         }
     }
 
     var statFilesystem: FilesystemStat {
         get async throws {
-            try parent.withSessionIO {
+            try await parent.withCancellableSessionIO { [self] slice in
                 try checkClosed()
-                return try SFTPFStatVFS(handle: handle)
+                return try slice { try SFTPFStatVFS(handle: handle) }
             }
         }
     }

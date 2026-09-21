@@ -90,6 +90,7 @@ Timeout rules differ by API:
 | `login(timeOut:)` / `loginTimeOut` | Positive finite only | Not supported — must stay positive and finite |
 | `getServerHostKey(..., timeOut:)` | Positive finite only | Not supported — must stay positive and finite |
 | `client.timeout` after construction | Positive finite, or `.infinity` | Set `client.timeout = .infinity` (maps to libssh2 `0`) |
+| `client.teardownGracePeriod` | Positive finite, or `.infinity` (default `1.0`) | Set `client.teardownGracePeriod = .infinity` — the goodbye then runs under `operationsTimeOut` alone |
 
 On the `timeout` property, non-positive values other than `.infinity` are ignored; the setter is a silent no-op if the
 client is already closed. Reading `timeout` returns `.infinity` when libssh2 has no timeout configured.
@@ -684,6 +685,90 @@ The callback is `async`, so it can `await` (for example hopping to a `@MainActor
 transfer waits for it before sending the next chunk, so keep it short. Synchronous closures still compile unchanged.
 
 Returning `false` throws `FileTransferErrors.transferCancelled`.
+
+### Cancelling a transfer
+
+There are two ways to stop a transfer, and they mean different things.
+
+Returning `false` from the progress callback is a *cooperative stop*: the current chunk finishes, the transfer unwinds
+cleanly, and `FileTransferErrors.transferCancelled` is thrown. It can only take effect between chunks, so it cannot end
+a transfer whose server has stopped sending data.
+
+Cancelling the Swift task is a *hard stop* and works even then:
+
+```swift
+let transfer = Task {
+    try await client.download(from: "/data/large.bin", to: localURL) { _, _, _, _ in true }
+}
+
+transfer.cancel()
+
+do { try await transfer.value }
+catch is CancellationError { /* the transfer stopped */ }
+```
+
+libssh2 has no way to interrupt a blocking call from another thread, so SwiftSFTP drives blocking reads and writes in
+short slices (100 ms) on a dedicated queue and checks for cancellation between them. Cancellation is therefore observed
+within roughly one slice rather than after `operationsTimeOut`, and blocking libssh2 calls never occupy a Swift
+cooperative-pool thread. `read`, `write`, `fsync`, `stat`, and the upload/download conveniences all behave this way.
+
+What a cancelled transfer leaves behind:
+
+| | |
+|---|---|
+| Downloads | Chunks already received are flushed to the local file before the error surfaces. |
+| Uploads | Chunks already sent stay on the remote file; its size is the resume point for `resume: true`. |
+| Remote file position | Advanced by whatever was actually transferred, so the handle stays consistent. |
+| The session | Untouched. If the server recovers, the connection is still usable. |
+
+### Closing a connection that stopped responding
+
+Closing is the other half of stopping. `close()` — on a handle or on the client — sends a goodbye that the peer has to
+answer, and a peer that stopped answering reads and writes will not answer that either.
+
+So the goodbye is best-effort: it gets a grace period — `client.teardownGracePeriod`, one second by default — and
+then SwiftSFTP drops the socket regardless.
+That is what actually makes the cleanup correct — once the descriptor is gone the server tears down its side of the
+channel and the file handles opened on it. Once any call has given up waiting for the peer, later closes skip the
+goodbye entirely and go straight to the drop.
+
+Two properties fall out of this, both worth relying on:
+
+- **Teardown is bounded by the grace period, not by `operationsTimeOut`.** Cancelling a stalled download and then
+  closing the handle and the client returns in about a second, whether `operationsTimeOut` is 5 seconds or 30.
+- **`client.close()` works while a transfer is still blocked inside libssh2.** It does not wait for that call; it shuts
+  the socket down, which unblocks it with an error. You do not have to cancel first, though cancelling is tidier.
+
+```swift
+let handle = try await client.openFile(.read, path: "/data/large.bin", permissions: [])
+let transfer = Task { try await handle.read(to: localURL) { _, _, _, _ in true } }
+
+transfer.cancel()
+_ = await transfer.result          // ~100 ms, even with the server silent
+
+try? await handle.close()          // capped at the grace period
+try? await client.close()          // skips the goodbye, drops the socket
+```
+
+`close()` throws only when releasing resources actually failed; a goodbye that timed out is logged, not thrown, because
+everything was still freed.
+
+Raise `teardownGracePeriod` for links slow enough that a legitimate goodbye needs longer than a second, or set it to
+`.infinity` to switch the cap off and get the pre-cap behaviour back. Non-positive values and NaN are ignored. A client
+from `fork()` inherits the current value.
+
+```swift
+client.teardownGracePeriod = 3           // satellite link: give the goodbye a fairer chance
+client.teardownGracePeriod = .infinity   // no cap: bounded by operationsTimeOut alone
+```
+
+> With `.infinity`, `close()` goes back to waiting for a call that is still blocked inside libssh2 instead of dropping
+> the socket to get past it. Together with `operationsTimeOut: nil` that means `close()` can block for as long as the
+> peer stays silent.
+
+> One known gap: libssh2 does not free a file handle whose `SSH_FXP_CLOSE` never completed, even when the session is
+> shut down (there is a `TODO` to that effect in its `sftp_shutdown`). Abandoning handles on wedged connections
+> therefore leaks a small amount of memory per handle until the process exits.
 
 ### Client-side remote copy
 
