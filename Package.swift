@@ -121,17 +121,23 @@ let libssh2Target = Target.target(
     linkerSettings: opensslLinkerSettings
 )
 
+let strictConcurrencySettings: [SwiftSetting] = [
+    .swiftLanguageMode(.v6)
+]
+
 let swiftSFTPTarget = Target.target(
     name: "SwiftSFTP",
     dependencies: ["libssh2"] + swiftSFTPOpenSSLDependencies + [
         .product(name: "PathWorks", package: "PathWorks"),
         .product(name: "Logging", package: "swift-log"),
-    ]
+    ],
+    swiftSettings: strictConcurrencySettings
 )
 
 let swiftSFTPTestsTarget = Target.testTarget(
     name: "SwiftSFTPTests",
-    dependencies: ["SwiftSFTP", "libssh2"] + swiftSFTPOpenSSLDependencies
+    dependencies: ["SwiftSFTP", "libssh2"] + swiftSFTPOpenSSLDependencies,
+    swiftSettings: strictConcurrencySettings
 )
 
 let package = Package(

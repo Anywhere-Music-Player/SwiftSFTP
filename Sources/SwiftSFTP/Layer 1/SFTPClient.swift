@@ -333,11 +333,15 @@ public extension SFTPClient {
 
         resources.keepAliveTask?.cancel()
 
+        // The state queue already made this closure the sole owner of `resources` (the ivars were nilled out
+        // above), so handing it across the queue hop is safe despite the Layer 0 handles not being Sendable.
+        let box = UncheckedSendableBox(resources)
+
         // Not the session-I/O queue: a transfer still blocked in libssh2 owns that queue, and the teardown below is
         // precisely what has to get past it.
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             DispatchQueue.global().async {
-                continuation.resume(with: Result { try self.teardown(resources) })
+                continuation.resume(with: Result { try self.teardown(box.value) })
             }
         }
     }
