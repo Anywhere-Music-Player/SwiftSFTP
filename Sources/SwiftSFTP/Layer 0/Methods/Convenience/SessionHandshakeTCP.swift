@@ -12,7 +12,7 @@ public typealias SwiftSFTPSocket = Int32
 /// - Parameter socket: The socket descriptor to shut down.
 /// - Throws: `POSIXError` when the descriptor could not be shut down.
 public func ShutdownSocket(_ socket: SwiftSFTPSocket) throws {
-    guard shutdown(socket, SHUT_RDWR) == 0 else {
+    guard shutdown(socket, Int32(SHUT_RDWR)) == 0 else {
         if errno == ENOTCONN {
             return
         }
