@@ -184,8 +184,9 @@ public extension SFTPFile {
                 _closed = true
 
                 // `SSH_FXP_CLOSE` needs an answer the server may never send. Cap the wait: closing a handle is not
-                // worth one whole `operationsTimeOut` when the connection has stopped responding, and
-                // ``SFTPClient/close()`` releases what is left regardless.
+                // worth one whole `operationsTimeOut` when the connection has stopped responding. A close that gives
+                // up leaves the handle owned by libssh2, so hand it to the parent, which reclaims it once the socket
+                // is down.
                 let configured = SessionGetTimeout(session: parent.session)
                 let capped = closeTimeoutMilliseconds(configured: configured)
                 SessionSetTimeout(session: parent.session, timeoutMilliseconds: capped)
@@ -198,6 +199,8 @@ public extension SFTPFile {
                 catch let error as LibSSH2Error {
                     if case .timeout = error {
                         parent.notePeerResponded(false)
+                        // Only a timeout leaves the handle alive: libssh2 frees it on every other failure path.
+                        parent.noteAbandonedHandle(handle)
                     }
                     throw error
                 }

@@ -84,7 +84,9 @@ public protocol SFTPClientProtocol: Identifiable, Sendable, AnyObject {
     /// Closing handles individually first is tidier, but it is not what makes the cleanup correct.
     ///
     /// Failures of the graceful phase are logged rather than thrown; a successful return means every libssh2 and
-    /// socket resource was released.
+    /// socket resource was released. That includes file handles whose ``SFTPFileProtocol/close()`` timed out against
+    /// an unresponsive peer: once the socket is down, their close is retried — which now fails fast, letting libssh2
+    /// free them — and the SFTP session is shut down so the requests queued on those handles are released too.
     ///
     /// - Throws: libssh2/socket errors encountered while releasing resources.
     func close() async throws
