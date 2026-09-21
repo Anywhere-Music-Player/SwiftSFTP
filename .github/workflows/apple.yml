@@ -49,4 +49,12 @@ jobs:
         run: swift build --scratch-path /tmp/swift-build -v
 
       - name: Test (offline)
-        run: swift test --scratch-path /tmp/swift-test --filter "Key Validation"
+        run: |
+          set -o pipefail
+          swift test --scratch-path /tmp/swift-test --filter "$OFFLINE_TEST_FILTER" 2>&1 | tee /tmp/swift-test-offline.log
+          if grep -qE 'No matching test cases were run|^Test run with 0 tests' /tmp/swift-test-offline.log; then
+            echo "::error::Offline test filter '$OFFLINE_TEST_FILTER' executed zero tests" >&2
+            exit 1
+          fi
+        env:
+          OFFLINE_TEST_FILTER: "KeyValidationTests|SFTPPathTests|SFTPWindowsPathTests|WindowsSFTPPathTests"
