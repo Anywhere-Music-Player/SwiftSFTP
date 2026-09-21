@@ -273,25 +273,36 @@ func withStalledConnection(
     }
 
     let staging = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    let proxy = try StallingProxy(forwardingToPort: TS.port, stallAfterBytes: stallAfterBytes)
 
-    let client = try SFTPClient(
-        openSocketIn: TCPLocation(hostname: "127.0.0.1", port: proxy.port),
-        operationsTimeOut: operationsTimeOut,
-        hostKeyAcceptance: .acceptAny,
-        authentication: UserAuthentication(name: TS.testUser, auth: .password(TS.password)),
-        logger: nil
-    )
-    if let gracePeriod {
-        client.teardownGracePeriod = gracePeriod
-    }
-
+    // Each retry gets a fresh proxy: `StallingProxy` counts relayed bytes for the whole login+transfer
+    // sequence, so reusing one across a failed and a retried connection would let bytes from the discarded
+    // attempt count toward this attempt's `stallAfterBytes` budget.
+    let (proxy, client): (StallingProxy, SFTPClient)
     do {
-        try await client.login(timeOut: 15)
+        (proxy, client) = try await retryingTransientConnectionFailure {
+            let proxy = try StallingProxy(forwardingToPort: TS.port, stallAfterBytes: stallAfterBytes)
+            let client = try SFTPClient(
+                openSocketIn: TCPLocation(hostname: "127.0.0.1", port: proxy.port),
+                operationsTimeOut: operationsTimeOut,
+                hostKeyAcceptance: .acceptAny,
+                authentication: UserAuthentication(name: TS.testUser, auth: .password(TS.password)),
+                logger: nil
+            )
+            if let gracePeriod {
+                client.teardownGracePeriod = gracePeriod
+            }
+            do {
+                try await client.login(timeOut: 15)
+            }
+            catch {
+                proxy.stop()
+                try? await client.close()
+                throw error
+            }
+            return (proxy, client)
+        }
     }
     catch {
-        proxy.stop()
-        try? await client.close()
         try? await withClient { try await $0.delete(path: remotePath) }
         throw error
     }

@@ -36,22 +36,117 @@ func makeLoggedInClient(
     hostKeyAcceptance: HostKeyAcceptance = .acceptAny,
     loginTimeout: TimeInterval = 15.0
 ) async throws -> SFTPClient {
-    var lastError: (any Error)?
-    for attempt in 1 ... 3 {
-        let client = try makeClient(user: user, auth: auth, hostKeyAcceptance: hostKeyAcceptance)
+    try await loginWithRetry(timeOut: loginTimeout) {
+        try makeClient(user: user, auth: auth, hostKeyAcceptance: hostKeyAcceptance)
+    }
+}
+
+/// Logs in on a freshly constructed client, retrying up to 3 times when the handshake fails for a
+/// transient connection-level reason (observed as intermittent KEX/socket/channel failures through
+/// Docker Desktop's port forwarding on macOS). Non-transient errors (authentication or host-key
+/// rejections) are rethrown immediately without retrying, so tests asserting a specific failure reason
+/// still see it.
+func loginWithRetry(
+    timeOut: TimeInterval = 15.0,
+    makeClient: () throws -> SFTPClient
+) async throws -> SFTPClient {
+    try await retryingTransientConnectionFailure {
+        let client = try makeClient()
         do {
-            try await client.login(timeOut: loginTimeout)
+            try await client.login(timeOut: timeOut)
             return client
         }
         catch {
-            lastError = error
             try? await client.close()
+            throw error
+        }
+    }
+}
+
+/// Retries `operation` up to 3 times when it throws a transient connection-level failure (observed as
+/// intermittent KEX/socket/channel failures through Docker Desktop's port forwarding on macOS).
+/// Non-transient errors are rethrown immediately.
+func retryingTransientConnectionFailure<T>(
+    _ operation: () async throws -> T
+) async throws -> T {
+    var lastError: (any Error)?
+    for attempt in 1 ... 3 {
+        do {
+            return try await operation()
+        }
+        catch {
+            guard isTransientConnectionFailure(error) else { throw error }
+            lastError = error
             if attempt < 3 {
                 try? await Task.sleep(nanoseconds: UInt64(attempt) * 100_000_000)
             }
         }
     }
     throw lastError ?? LibSSH2Error.badSocket("Could not connect to test server")
+}
+
+/// Whether `error` is a transient connection-level failure from the handshake (as opposed to an
+/// authentication or host-key rejection) worth retrying against a fresh connection.
+func isTransientConnectionFailure(_ error: any Error) -> Bool {
+    guard let sshError = error as? LibSSH2Error else { return false }
+    switch sshError {
+    case .keyExchangeFailure, .socketNone, .socketSend, .socketReceive, .socketTimeout,
+         .socketDisconnect, .bannerReceive, .bannerSend, .badSocket, .timeout, .channelFailure:
+        return true
+    default:
+        return false
+    }
+}
+
+/// Asserts that `operation` fails with `expectedError`, retrying up to 3 times when it fails first for
+/// a transient connection-level reason (observed as intermittent KEX/socket/channel failures through
+/// Docker Desktop's port forwarding on macOS). Records an issue (test failure) if `operation` succeeds
+/// or fails with a different error. Each retry re-invokes `operation` from scratch, so callers whose
+/// attempt needs fresh state (a new client) should construct it inside the closure.
+func expectRejects<E: Error & Equatable>(
+    _ expectedError: E,
+    _ operation: () async throws -> Void
+) async throws {
+    var attempt = 1
+    while true {
+        do {
+            try await operation()
+            Issue.record("expected operation to throw \(expectedError), but it succeeded")
+            return
+        }
+        catch let error as E where error == expectedError {
+            return
+        }
+        catch {
+            if isTransientConnectionFailure(error), attempt < 3 {
+                attempt += 1
+                try? await Task.sleep(nanoseconds: UInt64(attempt) * 100_000_000)
+                continue
+            }
+            Issue.record("expected operation to throw \(expectedError), but got \(error)")
+            return
+        }
+    }
+}
+
+/// Asserts that logging in on a freshly constructed client fails with `expectedError`, retrying up to
+/// 3 times when the handshake itself fails first for a transient connection-level reason.
+func expectLoginRejects(
+    _ expectedError: some Error & Equatable,
+    timeOut: TimeInterval = 10.0,
+    makeClient: () throws -> SFTPClient
+) async throws {
+    try await expectRejects(expectedError) {
+        let client = try makeClient()
+        do {
+            try await client.login(timeOut: timeOut)
+            try? await client.close()
+        }
+        catch {
+            try? await client.close()
+            throw error
+        }
+    }
 }
 
 func uniqueRemotePath(_ label: String = "test") -> String {

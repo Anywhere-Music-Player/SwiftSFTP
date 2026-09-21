@@ -517,7 +517,9 @@ struct SFTPClientResumableRecovery {
                 try? FileManager.default.removeItem(at: localDirectory)
             }
 
-            let observer = try await client.fork(loggedIn: true)
+            let observer = try await retryingTransientConnectionFailure {
+                try await client.fork(loggedIn: true)
+            }
             do {
                 #expect(ResumableSynchronizer.flushInterval == 2, "the cadence the spec fixes, and not configurable")
 

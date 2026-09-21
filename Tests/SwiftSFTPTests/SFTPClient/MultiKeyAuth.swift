@@ -250,11 +250,12 @@ struct SFTPClientMultiKeyAuth {
 
     private func loginAndClose(user: String, set: PrivateKeySet) async throws {
         try await withClient { _ in
-            let client = try makeClient(
-                user: user,
-                auth: UserAuthentication(name: user, auth: .privateKeys(set))
-            )
-            try await client.login(timeOut: 15.0)
+            let client = try await loginWithRetry(timeOut: 15.0) {
+                try makeClient(
+                    user: user,
+                    auth: UserAuthentication(name: user, auth: .privateKeys(set))
+                )
+            }
             #expect(!client.closed)
             try await client.close()
         }
@@ -280,7 +281,12 @@ private func withFreshHandshakenSession(
     _ body: (LibSSH2Session) async throws -> Void
 ) async throws {
     // libssh2 may already be initialized by other suites; ignore double-init errors.
-    _ = try? SSHInit()
+    let didInit = (try? SSHInit()) != nil
+    defer {
+        if didInit {
+            SSHExit()
+        }
+    }
 
     let session = try SessionInit()
     SessionSetBlocking(session: session, blocking: true)
