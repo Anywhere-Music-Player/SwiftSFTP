@@ -46,6 +46,14 @@ SwiftSFTP wraps libssh2 as a modern SwiftPM library. Source is organized in numb
 ## OpenSSL Artifacts
 
 - OpenSSL source lives in `vendor/openssl` as a submodule (read only).
+- Always pin `vendor/openssl` to the latest **stable** OpenSSL release tag (`openssl-X.Y.Z`). Never leave it on a
+  `-dev`, `alpha` or `beta` snapshot, and never on a branch tip: check `vendor/openssl/VERSION.dat` after moving it,
+  and confirm `PRE_RELEASE_TAG` is empty. A newer major/minor line in development does not outrank the newest stable
+  release — prefer the stable tag even when its version number is lower.
+- After moving the submodule, rebuild the XCFrameworks and rerun `swift build` + `swift test`: header layout changes
+  between releases can break the hand-written module map in `Scripts/build-openssl-xcframeworks.sh`. Keep
+  `configuration.h`, `macros.h`, `opensslv.h` and `opensslconf.h` in the `OpenSSLCrypto` module together — mixing
+  modular and textual copies of these leaks `OPENSSL_API_LEVEL` and fails every libssh2 translation unit.
 - Use `Scripts/build-openssl-xcframeworks.sh` to build static OpenSSL XCFrameworks.
 - Default OpenSSL artifact builds exclude x86 macOS and x86 simulator slices.
 - Use `--intelMac` to include x86_64 macOS.
