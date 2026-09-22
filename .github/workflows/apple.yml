@@ -32,6 +32,10 @@ jobs:
       - name: Swift version
         run: swift --version
 
+      # Check the committed artifacts before a cache or rebuild can hide omissions.
+      - name: Verify published OpenSSL debug symbols
+        run: python3 Scripts/verify-openssl-debug-symbols.py
+
       - name: Cache OpenSSL XCFrameworks
         id: openssl-cache
         uses: actions/cache@v5
