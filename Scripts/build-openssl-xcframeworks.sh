@@ -435,6 +435,15 @@ make_framework() {
   chmod +w "$content_dir/$name"
   install_name_tool -id "@rpath/$name.framework/$name" "$content_dir/$name"
 
+  # App Store Connect rejects the symbol upload for a framework it has no dSYM
+  # for ("The archive did not include a dSYM for ... with the UUIDs"). OpenSSL
+  # is compiled without -g, so dsymutil warns that there is no debug info and
+  # emits a dSYM carrying the Mach-O symbol table instead. That is enough: the
+  # UUID matches the binary, and OpenSSL frames in a crash report resolve to
+  # function names. There are no file/line numbers, which would require
+  # building OpenSSL with debug info and is not worth the size here.
+  dsymutil --out "$out_dir/$name.framework.dSYM" "$content_dir/$name" 2>/dev/null
+
   if [[ -n "$include_dir" ]]; then
     mkdir -p "$content_dir/Headers" "$content_dir/Modules"
     framework_headers "$include_dir" "$content_dir/Headers"
@@ -511,8 +520,8 @@ for entry in "${FRAMEWORK_GROUPS[@]}"; do
   make_framework OpenSSLSSL "$slice_dir/lib/libssl.dylib" "" \
     "$out_dir" "$platform" "$min_os" "$versioned"
 
-  CRYPTO_FRAMEWORK_ARGS+=(-framework "$out_dir/OpenSSLCrypto.framework")
-  SSL_FRAMEWORK_ARGS+=(-framework "$out_dir/OpenSSLSSL.framework")
+  CRYPTO_FRAMEWORK_ARGS+=(-framework "$out_dir/OpenSSLCrypto.framework" -debug-symbols "$out_dir/OpenSSLCrypto.framework.dSYM")
+  SSL_FRAMEWORK_ARGS+=(-framework "$out_dir/OpenSSLSSL.framework" -debug-symbols "$out_dir/OpenSSLSSL.framework.dSYM")
 done
 
 rm -rf "$OUTPUT_DIR/OpenSSLCrypto.xcframework" "$OUTPUT_DIR/OpenSSLSSL.xcframework"
