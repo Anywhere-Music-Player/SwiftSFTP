@@ -133,7 +133,7 @@ If you are using Xcode, you can directly add this repository as a Swift Package 
 3. Choose the version rule you prefer (e.g., "Up to Next Major Version") and click **Add Package**.
 4. Make sure the `SwiftSFTP` product is added to your app target.
 
-## Apple crypto coexistence
+### Apple crypto coexistence
 
 The `SwiftSFTP` product is dynamically linked. On Apple platforms this keeps its
 Swift and libssh2 OpenSSL calls bound to `OpenSSLCrypto.framework` when another
