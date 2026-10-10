@@ -95,9 +95,27 @@ try await myClient.delete(path: "myfolder")
 try await myClient.close()
 ```
 
-**A complete user guide can be found [here](Documentation/UserGuide.md).**
+For complete details, see:
 
-For offline key validation, host key checks, and asymmetric key generation and conversion, see [Cryptographic Utilities](Documentation/CryptographicUtils.md).
+- [User's Guide](Documentation/UserGuide.md) — connections, transfers, and filesystem operations:
+  - [Connecting to a Server](Documentation/UserGuide.md#connecting-to-a-server)
+  - [Authentication](Documentation/UserGuide.md#authentication)
+  - [Host Key Verification](Documentation/UserGuide.md#host-key-verification)
+  - [Navigating the Remote Filesystem](Documentation/UserGuide.md#navigating-the-remote-filesystem)
+  - [Working with Files](Documentation/UserGuide.md#working-with-files)
+  - [Uploading and Downloading](Documentation/UserGuide.md#uploading-and-downloading)
+  - [Copying, Renaming, and Deleting](Documentation/UserGuide.md#copying-renaming-and-deleting)
+  - [Shell Agent](Documentation/UserGuide.md#shell-agent-server-side-operations)
+  - [Symlinks](Documentation/UserGuide.md#symlinks)
+  - [Filesystem Statistics](Documentation/UserGuide.md#filesystem-statistics)
+  - [Keeping the Connection Alive](Documentation/UserGuide.md#keeping-the-connection-alive)
+  - [Validating SSH Keys](Documentation/UserGuide.md#validating-ssh-keys-offline)
+  - [Error Handling](Documentation/UserGuide.md#error-handling)
+
+- [Cryptographic Utilities](Documentation/CryptographicUtils.md) — offline validation and key management:
+  - [User Authentication Key Validation](Documentation/CryptographicUtils.md#user-authentication-key-validation-keyvalidation)
+  - [Host Key Validation](Documentation/CryptographicUtils.md#host-key-validation-known_hosts)
+  - [Asymmetric Key Generation, Import, and Export](Documentation/CryptographicUtils.md#asymmetric-keys-asymmetriccryptography)
 
 ## Adding SwiftSFTP to your Project
 

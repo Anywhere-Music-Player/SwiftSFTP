@@ -1191,49 +1191,19 @@ The same methods are available through `SFTPClientProtocol`.
 
 ## Validating SSH Keys (Offline)
 
-`String` conforms to `KeyValidation`, allowing you to check whether a PEM, PKCS#8 or OpenSSH key string is valid before using it for user authentication. You can also wrap material in `PrivateKeyString` / `PrivateKeyFile` and use `.valid` / `.algorithm`.
+You can check key material offline before using it for user authentication. `String` conforms to `KeyValidation`, and `PrivateKeyString` / `PrivateKeyFile` expose the same checks as `.valid` / `.isValidForSSH`, plus `.algorithm` (used when ordering multi-key authentication):
 
 ```swift
-let pem: String = """
-    -----BEGIN EC PRIVATE KEY-----
-    MHcCAQEEIGU49N3pXnY7QLxXGEf9vFayuBzcGp4knY1aFQbVgfeCoAoGCCqGSM49
-    AwEHoUQDQgAEMSzxTnxAxZ8MxL9AXDScmv1pcWOXh8N3QYo4O+dvBVeFsaumKxit
-    t3f3yxw97qIw5d+uUvDo1+1S7tcYRkWfIA==
-    -----END EC PRIVATE KEY-----
-    """
-
-// Generic check — works for any supported algorithm
-if pem.isValid_PrivateKey {
-    // well-formed unencrypted private key
-}
-
-// SSH check, decrypting with a passphrase — RSA, ECDSA or Ed25519 only
 if pem.isValidForSSH_PrivateKey(passphrase: "passphrase") {
-    // safe to use for SSH user authentication
+    // decryptable private key SFTPClient can authenticate with
 }
 
-// Algorithm-specific checks
-pem.isValid_RSA_PrivateKey
-pem.isValid_P256_PrivateKey
-pem.isValid_P384_PrivateKey
-pem.isValid_P521_PrivateKey
-pem.isValid_Curve25519_PrivateKey   // Ed25519
-
-// Convenience wrappers used with PrivateKeySet
 let key = PrivateKeyString(representation: pem, passphrase: nil)
-key.valid           // well-formed key of any supported algorithm
 key.isValidForSSH   // also usable for SSH user authentication
 key.algorithm       // e.g. .ecdsaP256 — used when ordering multi-key auth
 ```
 
-`.valid` and the `isValid_` checks answer "is this a well-formed key?" and accept every `AsymmetricKeyType`, including
-Ed448, ML-DSA and SLH-DSA. `.isValidForSSH` and the `isValidForSSH_` checks answer "can SSH user authentication use this
-key?", so they are `true` only for RSA, ECDSA P-256 / P-384 / P-521 or Ed25519 (exactly when `.algorithm` is non-`nil`).
-
-The `password:` variants such as `isValid_RSA_PrivateKey(password:)` are deprecated; use
-`isValid_RSA_PrivateKey(passphrase:)`, whose `passphrase` defaults to `nil`.
-
-Equivalent `_PublicKey` variants are available for all algorithms (including `isValid_Curve25519_PublicKey`).
+`.valid` and the `isValid_` checks accept any well-formed key; `.isValidForSSH` and the `isValidForSSH_` checks additionally require an algorithm OpenSSH accepts (RSA, ECDSA P-256 / P-384 / P-521, or Ed25519). For supported formats, passphrases, algorithm-specific checks, and public-key variants, see [User Authentication Key Validation](CryptographicUtils.md#user-authentication-key-validation-keyvalidation).
 
 > This validates key format and parseability only. It does not verify that the key is authorized on any particular server.
 
