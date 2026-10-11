@@ -83,35 +83,25 @@ Accepts IPv4 addresses, IPv6 addresses, and DNS names. Port must be 1–65535.
 
 ### SSH compression
 
-Choose compression independently for each direction when creating the client. The same argument is available on
-`SFTPClient.init` and `initAndLogin`:
+Compression is disabled by default. Set `compressionPreference` on `SFTPClient.init` or `initAndLogin` to request zlib
+independently for each direction:
 
 ```swift
 let client = try await SFTPClient.initAndLogin(
     openSocketIn: TCPLocation(hostname: "sftp.example.com", port: 22),
     authentication: UserAuthentication(name: "alice", auth: .password("s3cr3t")),
-    compressionPreference: (clientToServer: [], serverToClient: [.zlib])
+    compressionPreference: (clientToServer: [.zlib], serverToClient: [.zlib])
 )
-
-let compression = client.compression
-print(compression.clientToServer) // .none
-print(compression.serverToClient) // .zlib if supported by the server, otherwise .none
 ```
 
-The arrays are ordered from most to least preferred. Repeated algorithms are removed while preserving their first
-occurrence, and `[]` is equivalent to `[.none]`. If `.none` is absent, it is appended as the final fallback:
-`[.zlib]` becomes `[.zlib, .none]`, while `[.none, .zlib]` prefers no compression.
+Arrays list algorithms from most to least preferred. An empty array means `[.none]`, and `.none` is appended when absent
+to allow an uncompressed fallback.
 
-`.zlib` expands to `zlib@openssh.com`, which starts compressing after authentication, followed by plain `zlib`.
-If the server does not support zlib, the connection can proceed without compression. The read-only
-`compression` property reports the negotiated algorithm family for each direction through its `clientToServer` and
-`serverToClient` members, including `.zlib` for either zlib variant. It returns `(.none, .none)` before the handshake
-and after the client closes.
-Compression preferences are applied before the handshake and are inherited by forks.
+Unsupported compression falls back to `.none`; configuration failures also continue without compression rather than
+throwing. Check `client.compression.clientToServer` and `client.compression.serverToClient` after login for the
+negotiated algorithms (`.zlib` or `.none`).
 
-If the compression preferences cannot be configured, the client continues without compression in both directions.
-Compression configuration failures do not throw from initialization. Applications that require compression should
-check `compression.clientToServer` and `compression.serverToClient` after login and decide whether to continue.
+Currently, SwiftSFTP and libssh2 only support zlib, but other compression algorithms can be added in the future.
 
 ### Timeouts
 

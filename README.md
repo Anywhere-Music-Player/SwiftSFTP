@@ -44,7 +44,8 @@ import Foundation
 let myClient = try SFTPClient(
     openSocketIn: .init(hostname: "localhost", port: 6922),
     hostKeyAcceptance: .acceptAny, // Configurable for strict host key checking
-    authentication: .init(name: "bulbasaur", auth: .password("pass123")) // Also supports .privateKey
+    authentication: .init(name: "bulbasaur", auth: .password("pass123")), // Also supports .privateKey
+    compressionPreference: (clientToServer: [.zlib], serverToClient: [.zlib])
 )
 
 // - Call this to connect
@@ -95,10 +96,14 @@ try await myClient.delete(path: "myfolder")
 try await myClient.close()
 ```
 
+The example requests zlib compression in both directions, with automatic fallback to `.none` if the server does not
+support it. Check `myClient.compression` after login for the negotiated algorithms.
+
 For complete details, see:
 
 - [User's Guide](Documentation/UserGuide.md) — connections, transfers, and filesystem operations:
   - [Connecting to a Server](Documentation/UserGuide.md#connecting-to-a-server)
+  - [SSH Compression](Documentation/UserGuide.md#ssh-compression)
   - [Authentication](Documentation/UserGuide.md#authentication)
   - [Host Key Verification](Documentation/UserGuide.md#host-key-verification)
   - [Navigating the Remote Filesystem](Documentation/UserGuide.md#navigating-the-remote-filesystem)
@@ -162,7 +167,8 @@ The first build compiles OpenSSL; subsequent builds are incremental.
 Libssh2 is built with SSH zlib compression support and links the platform's `libz`.
 Apple SDKs and the Android NDK provide it; Linux builds require the zlib development
 package (for example, `sudo apt-get install zlib1g-dev` on Debian/Ubuntu).
-Compression is disabled by default per session. Layer 0 callers can enable it with
+Compression is disabled by default per session. Configure it with `compressionPreference` when creating an
+`SFTPClient`; see [SSH compression](Documentation/UserGuide.md#ssh-compression). Layer 0 callers can enable it with
 `SessionFlag(session: session, flag: .compress, value: true)` before the SSH handshake.
 
 OpenSSL preparation and its generated sources are maintained in
