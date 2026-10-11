@@ -1,13 +1,13 @@
 {
-  "originHash" : "a951e3f163bdccaa3b1017b7a7392973fc1539631878ada738fb0ec0c39d598f",
+  "originHash" : "a8c678c3378957bec8201af714c0b951732faec7219385203161e7c71aa6961e",
   "pins" : [
     {
       "identity" : "pathworks",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RuiNelson/PathWorks.git",
       "state" : {
-        "revision" : "1892d7c5148bac69c4d48e99b4454cd1010da08c",
-        "version" : "2.0.0"
+        "revision" : "c165f00ed955e73448d73ac5c4ce7ab57d67f533",
+        "version" : "2.0.1"
       }
     },
     {
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log.git",
       "state" : {
-        "revision" : "2aed77ae5ec9a86d8fe42c12275e4c2653a286ee",
-        "version" : "1.13.1"
+        "revision" : "4038b6a4f74a1426f47eb1dd5b4bb5628a15d597",
+        "version" : "1.16.1"
       }
     }
   ],
