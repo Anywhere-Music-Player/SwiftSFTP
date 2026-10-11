@@ -2,7 +2,7 @@ name: Apple
 
 on:
   push:
-    branches: [main]
+    branches: [main, bin-free]
   pull_request:
     branches: [main]
 
@@ -22,7 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          submodules: true
+          submodules: recursive
 
       - name: Setup Swift
         uses: swift-actions/setup-swift@v3
@@ -32,31 +32,23 @@ jobs:
       - name: Swift version
         run: swift --version
 
-      # Check the committed artifacts before a cache or rebuild can hide omissions.
-      - name: Verify published OpenSSL debug symbols
-        run: python3 Scripts/verify-openssl-debug-symbols.py
+      - name: Verify prepared OpenSSL sources
+        run: |
+          git -C Vendor/SwiftSFTP-OpenSSL submodule update --init --checkout Vendor/openssl
+          python3 Vendor/SwiftSFTP-OpenSSL/Scripts/generate-openssl-sources.py --check
+          python3 Scripts/update-openssl-manifest.py --check
 
       - name: Verify qualified libssh2 backend
-        run: python3 Scripts/generate-libssh2-apple-backend.py --check
-
-      - name: Cache OpenSSL XCFrameworks
-        id: openssl-cache
-        uses: actions/cache@v5
-        with:
-          path: Artifacts/OpenSSL
-          key: >-
-            openssl-xcframeworks-${{ runner.os }}-
-            ${{ hashFiles('Scripts/build-openssl-xcframeworks.sh', 'vendor/openssl/Configure') }}
-
-      - name: Build OpenSSL XCFrameworks
-        if: steps.openssl-cache.outputs.cache-hit != 'true'
-        run: ./Scripts/build-openssl-xcframeworks.sh
+        run: python3 Scripts/generate-libssh2-backend.py --check
 
       - name: Test foreign OpenSSL header precedence
         run: bash Tests/Packaging/CryptoIsolation/check-header-isolation.sh
 
       - name: Build
         run: swift build --scratch-path /tmp/swift-build -v
+
+      - name: Generate test keys and fixtures
+        run: bash Scripts/generate-test-keys-and-fixtures.sh
 
       - name: Test (offline)
         run: |
@@ -67,7 +59,7 @@ jobs:
             exit 1
           fi
         env:
-          OFFLINE_TEST_FILTER: "KeyValidationTests|SFTPPathTests|SFTPWindowsPathTests|WindowsSFTPPathTests"
+          OFFLINE_TEST_FILTER: "KeyValidationTests|KeyParsingRegressionTests|PrivateKeyTypesTests|SSHUserKeyAlgorithmTests|SFTPPathTests|SFTPWindowsPathTests|WindowsSFTPPathTests"
 
       - name: Test consumer crypto symbol isolation
         run: swift test --package-path Tests/Packaging/CryptoIsolation --scratch-path /tmp/swift-crypto-isolation

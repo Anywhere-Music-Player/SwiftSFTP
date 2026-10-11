@@ -9,7 +9,9 @@ SwiftSFTP wraps libssh2 as a modern SwiftPM library. Source is organized in numb
 - **Extensions** — shared helpers (pointers, strings, errors) used by both layers.
 - **CryptographicUtils** — OpenSSL-backed key generation, import, export, and validation, plus hashing.
 
-`vendor/libssh2` and `vendor/openssl` are read-only submodules; do not edit them except when explicitly upgrading vendored sources.
+`Vendor/libssh2` and `Vendor/SwiftSFTP-OpenSSL/Vendor/openssl` are read-only upstream submodules;
+do not edit them except when explicitly upgrading vendored sources. OpenSSL preparation belongs to
+the separate `SwiftSFTP-OpenSSL` repository, included here as `Vendor/SwiftSFTP-OpenSSL`.
 
 ## Layer 0 — libssh2 wrappers (`Sources/SwiftSFTP/Layer 0`)
 
@@ -49,7 +51,7 @@ SwiftSFTP wraps libssh2 as a modern SwiftPM library. Source is organized in numb
 - `Validation/` holds the `String` validation APIs (`KeyValidation`, `known_hosts` checks) and `SSHUserKeyAlgorithm`.
 - `OpenSSH/` holds the OpenSSH formats: the SSH wire encoding, the key codec, key file ciphers, and
   `OpenSSHKeyPolicy`. It does not import OpenSSL.
-- `OpenSSL/` is the only place that imports OpenSSL: `OpenSSLKey` wraps `EVP_PKEY`, alongside ciphers, digests, and
+- `OpenSSL/` is the only place that imports `OpenSSLCrypto`: `OpenSSLKey` wraps `EVP_PKEY`, alongside ciphers, digests, and
   support types.
 - `Deprecated/` holds deprecated API, forwarding to its replacement.
 - Parsing (`PublicKey`, `PrivateKey`) checks that keys are valid and consistent but applies no policy; SSH acceptance
@@ -57,23 +59,35 @@ SwiftSFTP wraps libssh2 as a modern SwiftPM library. Source is organized in numb
 - Check imported keys in the `init(importing:)` initializers of `PublicKey` and `PrivateKey`, so every format gets the
   same checks.
 
-## OpenSSL Artifacts
+## OpenSSL Source Distribution
 
-- OpenSSL source lives in `vendor/openssl` as a submodule (read only).
-- Always pin `vendor/openssl` to the latest **stable** OpenSSL release tag (`openssl-X.Y.Z`). Never leave it on a
-  `-dev`, `alpha` or `beta` snapshot, and never on a branch tip: check `vendor/openssl/VERSION.dat` after moving it,
-  and confirm `PRE_RELEASE_TAG` is empty. A newer major/minor line in development does not outrank the newest stable
+- OpenSSL source preparation lives in the public `RuiNelson/SwiftSFTP-OpenSSL` repository, included as the
+  `Vendor/SwiftSFTP-OpenSSL` submodule. Keep it pinned to a verified commit.
+- The nested upstream `Vendor/SwiftSFTP-OpenSSL/Vendor/openssl` submodule is read-only and uses a **stable**
+  OpenSSL release tag (`openssl-X.Y.Z`). Never leave it on a `-dev`, `alpha` or `beta` snapshot or branch tip:
+  check its `VERSION.dat` after moving it and confirm `PRE_RELEASE_TAG` is empty.
+  A newer major/minor line in development does not outrank the newest stable
   release — prefer the stable tag even when its version number is lower.
-- After moving the submodule, rebuild the XCFrameworks and rerun `swift build` + `swift test`: header layout changes
-  between releases can break the hand-written module map in `Scripts/build-openssl-xcframeworks.sh`. Keep
-  `configuration.h`, `macros.h`, `opensslv.h` and `opensslconf.h` in the `OpenSSLCrypto` module together — mixing
-  modular and textual copies of these leaks `OPENSSL_API_LEVEL` and fails every libssh2 translation unit.
-- Use `Scripts/build-openssl-xcframeworks.sh` to build dynamic OpenSSL XCFrameworks.
-- After updating libssh2, run `python3 Scripts/generate-libssh2-apple-backend.py`; CI checks that its generated Apple backend matches the pinned submodule.
-- Default OpenSSL artifact builds exclude x86 macOS and x86 simulator slices.
-- Use `--intelMac` to include x86_64 macOS.
-- Use `--intelSim` to include x86_64 simulator slices.
-- SwiftPM consumes `Artifacts/OpenSSL/*.xcframework`; these must be present for package users.
+- Update and prepare OpenSSL inside SwiftSFTP-OpenSSL. After updating this repository's submodule pin, run
+  `python3 Scripts/update-openssl-manifest.py` and rerun `swift build` + `swift test`.
+- SwiftPM compiles `Vendor/SwiftSFTP-OpenSSL/Sources/OpenSSLCrypto/` directly on every supported platform.
+  Do not add binary targets, precompiled libraries, build-time OpenSSL downloads or consumer-side
+  Perl/Make/plugin requirements.
+- The prepared snapshot is generated; edit the generator in SwiftSFTP-OpenSSL rather than its C sources or
+  headers. It preserves the upstream licenses, qualifies public headers under `SwiftSFTP_OpenSSL/`,
+  and gives public C symbols private linker
+  names while hiding internal symbols to avoid capturing
+  another SDK's OpenSSL/BoringSSL calls. Keep the whole header set in one Clang module.
+- CI runs the submodule's generator with `--check` and `Scripts/update-openssl-manifest.py --check` to verify
+  the snapshot and parent manifest fingerprint. Check out submodules recursively, then initialize the
+  companion's maintenance-only upstream with `git -C Vendor/SwiftSFTP-OpenSSL submodule update --init --checkout Vendor/openssl`.
+  Keep its `update = none` setting so consumer builds fetch the prepared snapshot only.
+- SwiftSFTP-OpenSSL checks upstream stable releases daily and opens one Issue per newer release.
+  Updates remain a maintainer action; do not follow `master` or update pins automatically during builds.
+- After updating libssh2, run `python3 Scripts/generate-libssh2-backend.py`; CI checks its generated backend against
+  the pinned submodule. The adapter is used on all platforms, and the submodule stays unmodified.
+- Preserve the crypto coexistence consumer tests when changing linkage, visibility, or headers. See
+  `Documentation/OpenSSLSourceBuild.md` for the portable C configuration and maintenance workflow.
 
 ## Testing
 

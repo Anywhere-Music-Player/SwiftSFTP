@@ -3,106 +3,257 @@
 
 import PackageDescription
 
-let applePlatforms: [Platform] = [.macOS, .iOS, .tvOS, .watchOS, .visionOS]
-
-let opensslTargets: [Target] = [
-    .systemLibrary(
-        name: "COpenSSL",
-        path: "Sources/OpenSSL",
-        providers: [
-            .apt(["libssl-dev"]),
-            .yum(["openssl-devel"]),
-        ]
-    ),
-    .binaryTarget(
-        name: "OpenSSLCrypto",
-        path: "Artifacts/OpenSSL/OpenSSLCrypto.xcframework"
-    ),
-    .binaryTarget(
-        name: "OpenSSLSSL",
-        path: "Artifacts/OpenSSL/OpenSSLSSL.xcframework"
-    ),
+// BEGIN OPENSSL SOURCE MANIFEST
+// OpenSSL source manifest SHA-256: 904706bc4148b58438cf3a9e064b5660b22948cc404e281859fbbc01b106343b
+let opensslSourcePaths: [String] = [
+    "crypto",
+    "providers",
+    "ssl",
 ]
-
-let libssh2OpenSSLDependencies: [Target.Dependency] = [
-    .target(name: "COpenSSL", condition: .when(platforms: [.linux, .android])),
-    .target(name: "OpenSSLCrypto", condition: .when(platforms: applePlatforms)),
+let opensslExcludedPaths: [String] = [
+    "crypto/LPdir_nyi.inc",
+    "crypto/LPdir_unix.inc",
+    "crypto/LPdir_vms.inc",
+    "crypto/LPdir_win.inc",
+    "crypto/LPdir_win32.inc",
+    "crypto/LPdir_wince.inc",
+    "crypto/des/ncbc_enc.inc",
+    "providers/decoders.inc",
+    "providers/encoders.inc",
+    "providers/fips/include/fips_indicator_params.inc",
+    "providers/fips/include/fips_selftest_params.inc",
+    "providers/implementations/asymciphers/rsa_enc.inc",
+    "providers/implementations/asymciphers/sm2_enc.inc",
+    "providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc",
+    "providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc",
+    "providers/implementations/ciphers/cipher_aes_ccm_hw_aesni.inc",
+    "providers/implementations/ciphers/cipher_aes_ccm_hw_rv32i.inc",
+    "providers/implementations/ciphers/cipher_aes_ccm_hw_rv64i.inc",
+    "providers/implementations/ciphers/cipher_aes_ccm_hw_s390x.inc",
+    "providers/implementations/ciphers/cipher_aes_ccm_hw_t4.inc",
+    "providers/implementations/ciphers/cipher_aes_cfb_hw_aesni.inc",
+    "providers/implementations/ciphers/cipher_aes_cfb_hw_s390x.inc",
+    "providers/implementations/ciphers/cipher_aes_cts.inc",
+    "providers/implementations/ciphers/cipher_aes_gcm_hw_aesni.inc",
+    "providers/implementations/ciphers/cipher_aes_gcm_hw_armv8.inc",
+    "providers/implementations/ciphers/cipher_aes_gcm_hw_ppc.inc",
+    "providers/implementations/ciphers/cipher_aes_gcm_hw_rv32i.inc",
+    "providers/implementations/ciphers/cipher_aes_gcm_hw_rv64i.inc",
+    "providers/implementations/ciphers/cipher_aes_gcm_hw_s390x.inc",
+    "providers/implementations/ciphers/cipher_aes_gcm_hw_t4.inc",
+    "providers/implementations/ciphers/cipher_aes_gcm_hw_vaes_avx512.inc",
+    "providers/implementations/ciphers/cipher_aes_gcm_siv.inc",
+    "providers/implementations/ciphers/cipher_aes_hw_aesni.inc",
+    "providers/implementations/ciphers/cipher_aes_hw_armv8.inc",
+    "providers/implementations/ciphers/cipher_aes_hw_rv32i.inc",
+    "providers/implementations/ciphers/cipher_aes_hw_rv64i.inc",
+    "providers/implementations/ciphers/cipher_aes_hw_s390x.inc",
+    "providers/implementations/ciphers/cipher_aes_hw_t4.inc",
+    "providers/implementations/ciphers/cipher_aes_ocb.inc",
+    "providers/implementations/ciphers/cipher_aes_siv.inc",
+    "providers/implementations/ciphers/cipher_aes_wrp.inc",
+    "providers/implementations/ciphers/cipher_aes_xts.inc",
+    "providers/implementations/ciphers/cipher_aes_xts_s390x.inc",
+    "providers/implementations/ciphers/cipher_camellia_cts.inc",
+    "providers/implementations/ciphers/cipher_camellia_hw_t4.inc",
+    "providers/implementations/ciphers/cipher_chacha20.inc",
+    "providers/implementations/ciphers/cipher_chacha20_poly1305.inc",
+    "providers/implementations/ciphers/cipher_null.inc",
+    "providers/implementations/ciphers/cipher_rc4_hmac_md5.inc",
+    "providers/implementations/ciphers/cipher_sm4_ccm_hw_rv64i.inc",
+    "providers/implementations/ciphers/cipher_sm4_ccm_hw_x86_64.inc",
+    "providers/implementations/ciphers/cipher_sm4_gcm_hw_rv64i.inc",
+    "providers/implementations/ciphers/cipher_sm4_gcm_hw_x86_64.inc",
+    "providers/implementations/ciphers/cipher_sm4_hw_rv64i.inc",
+    "providers/implementations/ciphers/cipher_sm4_hw_x86_64.inc",
+    "providers/implementations/ciphers/cipher_sm4_xts.inc",
+    "providers/implementations/ciphers/cipher_sm4_xts_hw_rv64i.inc",
+    "providers/implementations/ciphers/cipher_sm4_xts_hw_x86_64.inc",
+    "providers/implementations/ciphers/ciphercommon.inc",
+    "providers/implementations/ciphers/ciphercommon_ccm.inc",
+    "providers/implementations/ciphers/ciphercommon_gcm.inc",
+    "providers/implementations/digests/blake2_prov.inc",
+    "providers/implementations/digests/cshake_prov.inc",
+    "providers/implementations/digests/digestcommon.inc",
+    "providers/implementations/digests/mdc2_prov.inc",
+    "providers/implementations/digests/ml_dsa_mu_prov.inc",
+    "providers/implementations/digests/sha2_prov.inc",
+    "providers/implementations/digests/sha3_prov.inc",
+    "providers/implementations/encode_decode/decode_der2key.inc",
+    "providers/implementations/encode_decode/decode_epki2pki.inc",
+    "providers/implementations/encode_decode/decode_pem2der.inc",
+    "providers/implementations/encode_decode/decode_pvk2key.inc",
+    "providers/implementations/encode_decode/decode_spki2typespki.inc",
+    "providers/implementations/encode_decode/encode_key2any.inc",
+    "providers/implementations/encode_decode/encode_key2ms.inc",
+    "providers/implementations/exchange/dh_exch.inc",
+    "providers/implementations/exchange/ecdh_exch.inc",
+    "providers/implementations/exchange/ecx_exch.inc",
+    "providers/implementations/include/prov/blake2_params.inc",
+    "providers/implementations/kdfs/argon2.inc",
+    "providers/implementations/kdfs/hkdf.inc",
+    "providers/implementations/kdfs/hmacdrbg_kdf.inc",
+    "providers/implementations/kdfs/kbkdf.inc",
+    "providers/implementations/kdfs/krb5kdf.inc",
+    "providers/implementations/kdfs/pbkdf1.inc",
+    "providers/implementations/kdfs/pbkdf2.inc",
+    "providers/implementations/kdfs/pkcs12kdf.inc",
+    "providers/implementations/kdfs/pvkkdf.inc",
+    "providers/implementations/kdfs/scrypt.inc",
+    "providers/implementations/kdfs/snmpkdf.inc",
+    "providers/implementations/kdfs/srtpkdf.inc",
+    "providers/implementations/kdfs/sshkdf.inc",
+    "providers/implementations/kdfs/sskdf.inc",
+    "providers/implementations/kdfs/tls1_prf.inc",
+    "providers/implementations/kdfs/x942kdf.inc",
+    "providers/implementations/kdfs/x963kdf.inc",
+    "providers/implementations/kem/ec_kem.inc",
+    "providers/implementations/kem/ecx_kem.inc",
+    "providers/implementations/kem/ml_kem_kem.inc",
+    "providers/implementations/kem/mlx_kem.inc",
+    "providers/implementations/kem/rsa_kem.inc",
+    "providers/implementations/keymgmt/dh_kmgmt.inc",
+    "providers/implementations/keymgmt/dsa_kmgmt.inc",
+    "providers/implementations/keymgmt/ec_kmgmt_imexport.inc",
+    "providers/implementations/keymgmt/ecx_kmgmt.inc",
+    "providers/implementations/keymgmt/keymgmtcommon.inc",
+    "providers/implementations/keymgmt/lms_kmgmt.inc",
+    "providers/implementations/keymgmt/mac_legacy_kmgmt.inc",
+    "providers/implementations/keymgmt/ml_dsa_kmgmt.inc",
+    "providers/implementations/keymgmt/ml_kem_kmgmt.inc",
+    "providers/implementations/keymgmt/mlx_kmgmt.inc",
+    "providers/implementations/keymgmt/slh_dsa_kmgmt.inc",
+    "providers/implementations/keymgmt/template_kmgmt.inc",
+    "providers/implementations/macs/blake2_mac_impl.inc",
+    "providers/implementations/macs/cmac_prov.inc",
+    "providers/implementations/macs/gmac_prov.inc",
+    "providers/implementations/macs/hmac_prov.inc",
+    "providers/implementations/macs/kmac_prov.inc",
+    "providers/implementations/macs/poly1305_prov.inc",
+    "providers/implementations/macs/siphash_prov.inc",
+    "providers/implementations/rands/drbg_ctr.inc",
+    "providers/implementations/rands/drbg_hash.inc",
+    "providers/implementations/rands/drbg_hmac.inc",
+    "providers/implementations/rands/fips_crng_test.inc",
+    "providers/implementations/rands/seed_src.inc",
+    "providers/implementations/rands/seed_src_jitter.inc",
+    "providers/implementations/rands/test_rng.inc",
+    "providers/implementations/signature/dsa_sig.inc",
+    "providers/implementations/signature/ecdsa_sig.inc",
+    "providers/implementations/signature/eddsa_sig.inc",
+    "providers/implementations/signature/lms_signature.inc",
+    "providers/implementations/signature/mac_legacy_sig.inc",
+    "providers/implementations/signature/ml_dsa_sig.inc",
+    "providers/implementations/signature/rsa_sig.inc",
+    "providers/implementations/signature/slh_dsa_sig.inc",
+    "providers/implementations/signature/sm2_sig.inc",
+    "providers/implementations/skeymgmt/generic.inc",
+    "providers/implementations/storemgmt/file_store.inc",
+    "providers/implementations/storemgmt/file_store_any2obj.inc",
+    "providers/implementations/storemgmt/winstore_store.inc",
+    "providers/stores.inc",
 ]
+// END OPENSSL SOURCE MANIFEST
 
-let swiftSFTPOpenSSLDependencies: [Target.Dependency] = [
-    .target(name: "COpenSSL", condition: .when(platforms: [.linux, .android])),
-    .target(name: "OpenSSLCrypto", condition: .when(platforms: applePlatforms)),
-]
-
-let opensslLinkerSettings: [LinkerSetting] = [
-    .linkedLibrary("ssl", .when(platforms: [.linux, .android])),
-    .linkedLibrary("crypto", .when(platforms: [.linux, .android])),
-]
+// Prepared in the pinned SwiftSFTP-OpenSSL submodule. SwiftPM compiles these
+// portable C sources for the destination: no binary targets or build-time tools.
+let opensslTarget = Target.target(
+    name: "OpenSSLCrypto",
+    path: "Vendor/SwiftSFTP-OpenSSL/Sources/OpenSSLCrypto",
+    exclude: ["LICENSE.txt", "UPSTREAM.json"] + opensslExcludedPaths,
+    sources: opensslSourcePaths,
+    publicHeadersPath: "include",
+    cSettings: [
+        // Keep upstream implicit conversions quiet without changing consumers' diagnostics.
+        .disableWarning("conversion"),
+        .disableWarning("double-promotion"),
+        .headerSearchPath("."),
+        .headerSearchPath("private"),
+        .headerSearchPath("crypto"),
+        .headerSearchPath("crypto/modes"),
+        .headerSearchPath("providers/common/include"),
+        .headerSearchPath("providers/implementations/include"),
+        .headerSearchPath("providers/fips/include"),
+        .define("OPENSSL_BUILDING_OPENSSL"),
+        .define("OPENSSLDIR", to: "\"\""),
+        .define("MODULESDIR", to: "\"\""),
+        .define("NDEBUG"),
+        .define("_GNU_SOURCE", .when(platforms: [.linux, .android])),
+        .define("OPENSSL_APPLE_CRYPTO_RANDOM", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])),
+    ],
+    linkerSettings: [.linkedLibrary("pthread", .when(platforms: [.linux]))]
+)
 
 let libssh2ExcludedPaths = [
-    "vendor/libssh2/.github",
-    "vendor/libssh2/cmake",
-    "vendor/libssh2/docs",
-    "vendor/libssh2/example",
-    "vendor/libssh2/m4",
-    "vendor/libssh2/os400",
-    "vendor/libssh2/tests",
-    "vendor/libssh2/vms",
-    "vendor/libssh2/CMakeLists.txt",
-    "vendor/libssh2/Makefile.am",
-    "vendor/libssh2/REUSE.toml",
-    "vendor/libssh2/appveyor.sh",
-    "vendor/libssh2/configure.ac",
-    "vendor/libssh2/libssh2.pc.in",
-    "vendor/libssh2/src/Makefile.am",
-    "vendor/libssh2/src/Makefile.inc",
-    "vendor/libssh2/src/libssh2.rc",
-    "vendor/libssh2/src/libssh2_config_cmake.h.in",
+    // This target's root also contains other targets and their resources.
+    "Sources/SwiftSFTP",
+    "Tests",
+    "Documentation",
+    "Scripts",
+    "TestServer",
+    "Vendor/SwiftSFTP-OpenSSL",
+    "Vendor/PathWorks",
+    "Vendor/libssh2/.github",
+    "Vendor/libssh2/cmake",
+    "Vendor/libssh2/docs",
+    "Vendor/libssh2/example",
+    "Vendor/libssh2/m4",
+    "Vendor/libssh2/os400",
+    "Vendor/libssh2/tests",
+    "Vendor/libssh2/vms",
+    "Vendor/libssh2/CMakeLists.txt",
+    "Vendor/libssh2/Makefile.am",
+    "Vendor/libssh2/REUSE.toml",
+    "Vendor/libssh2/appveyor.sh",
+    "Vendor/libssh2/configure.ac",
+    "Vendor/libssh2/libssh2.pc.in",
+    "Vendor/libssh2/src/Makefile.am",
+    "Vendor/libssh2/src/Makefile.inc",
+    "Vendor/libssh2/src/libssh2.rc",
+    "Vendor/libssh2/src/libssh2_config_cmake.h.in",
 ]
 
 let libssh2Sources = [
     "Sources/libssh2/server_sign_algorithms.c",
     "Sources/libssh2/swiftsftp_bcrypt_pbkdf.c",
-    "vendor/libssh2/src/agent.c",
-    "vendor/libssh2/src/bcrypt_pbkdf.c",
-    "vendor/libssh2/src/chacha.c",
-    "vendor/libssh2/src/channel.c",
-    "vendor/libssh2/src/cipher-chachapoly.c",
-    "vendor/libssh2/src/comp.c",
-    "vendor/libssh2/src/crypt.c",
-    "vendor/libssh2/src/global.c",
-    "vendor/libssh2/src/hostkey.c",
-    "vendor/libssh2/src/keepalive.c",
-    "vendor/libssh2/src/kex.c",
-    "vendor/libssh2/src/knownhost.c",
-    "vendor/libssh2/src/libgcrypt.c",
-    "vendor/libssh2/src/mac.c",
-    "vendor/libssh2/src/mbedtls.c",
-    "vendor/libssh2/src/misc.c",
-    "vendor/libssh2/src/openssl.c",
-    "vendor/libssh2/src/os400qc3.c",
-    "vendor/libssh2/src/packet.c",
-    "vendor/libssh2/src/pem.c",
-    "vendor/libssh2/src/poly1305.c",
-    "vendor/libssh2/src/publickey.c",
-    "vendor/libssh2/src/scp.c",
-    "vendor/libssh2/src/session.c",
-    "vendor/libssh2/src/sftp.c",
-    "vendor/libssh2/src/transport.c",
-    "vendor/libssh2/src/userauth.c",
-    "vendor/libssh2/src/userauth_kbd_packet.c",
-    "vendor/libssh2/src/version.c",
-    "vendor/libssh2/src/wincng.c",
+    "Vendor/libssh2/src/agent.c",
+    "Vendor/libssh2/src/bcrypt_pbkdf.c",
+    "Vendor/libssh2/src/chacha.c",
+    "Vendor/libssh2/src/channel.c",
+    "Vendor/libssh2/src/cipher-chachapoly.c",
+    "Vendor/libssh2/src/comp.c",
+    "Vendor/libssh2/src/crypt.c",
+    "Vendor/libssh2/src/global.c",
+    "Vendor/libssh2/src/hostkey.c",
+    "Vendor/libssh2/src/keepalive.c",
+    "Vendor/libssh2/src/kex.c",
+    "Vendor/libssh2/src/knownhost.c",
+    "Vendor/libssh2/src/libgcrypt.c",
+    "Vendor/libssh2/src/mac.c",
+    "Vendor/libssh2/src/mbedtls.c",
+    "Vendor/libssh2/src/misc.c",
+    "Vendor/libssh2/src/openssl.c",
+    "Vendor/libssh2/src/os400qc3.c",
+    "Vendor/libssh2/src/packet.c",
+    "Vendor/libssh2/src/pem.c",
+    "Vendor/libssh2/src/poly1305.c",
+    "Vendor/libssh2/src/publickey.c",
+    "Vendor/libssh2/src/scp.c",
+    "Vendor/libssh2/src/session.c",
+    "Vendor/libssh2/src/sftp.c",
+    "Vendor/libssh2/src/transport.c",
+    "Vendor/libssh2/src/userauth.c",
+    "Vendor/libssh2/src/userauth_kbd_packet.c",
+    "Vendor/libssh2/src/version.c",
+    "Vendor/libssh2/src/wincng.c",
 ]
 
 let libssh2CSettings: [CSetting] = [
-    .headerSearchPath("vendor/libssh2/include"),
-    .headerSearchPath("vendor/libssh2/src"),
-    .headerSearchPath("Artifacts/OpenSSL/Android/include", .when(platforms: [.android])),
-    // Select the qualified backend before crypto.h, independent of Xcode's
-    // shared include/ directory and other packages' canonical openssl/ headers.
-    .headerSearchPath("Sources/libssh2/apple", .when(platforms: applePlatforms)),
-    .define("HAVE_CONFIG_H", .when(platforms: applePlatforms)),
+    .headerSearchPath("Vendor/libssh2/include"),
+    .headerSearchPath("Vendor/libssh2/src"),
+    // Select our qualified backend before another SDK's openssl/ headers.
+    .headerSearchPath("Sources/libssh2/openssl"),
+    .define("HAVE_CONFIG_H"),
     .define("HAVE_GETTIMEOFDAY"),
     .define("HAVE_INTTYPES_H"),
     .define("HAVE_O_NONBLOCK"),
@@ -117,32 +268,28 @@ let libssh2CSettings: [CSetting] = [
 
 let libssh2Target = Target.target(
     name: "libssh2",
-    dependencies: libssh2OpenSSLDependencies,
+    dependencies: ["OpenSSLCrypto"],
     path: ".",
     exclude: libssh2ExcludedPaths,
     sources: libssh2Sources,
     publicHeadersPath: "Sources/libssh2/include",
-    cSettings: libssh2CSettings,
-    linkerSettings: opensslLinkerSettings
+    cSettings: libssh2CSettings
 )
-
-let strictConcurrencySettings: [SwiftSetting] = [
-    .swiftLanguageMode(.v6)
-]
 
 let swiftSFTPTarget = Target.target(
     name: "SwiftSFTP",
-    dependencies: ["libssh2"] + swiftSFTPOpenSSLDependencies + [
+    dependencies: [
+        "libssh2",
+        "OpenSSLCrypto",
         .product(name: "PathWorks", package: "PathWorks"),
         .product(name: "Logging", package: "swift-log"),
     ],
-    swiftSettings: strictConcurrencySettings
+    resources: [.copy("PrivacyInfo.xcprivacy")]
 )
 
 let swiftSFTPTestsTarget = Target.testTarget(
     name: "SwiftSFTPTests",
-    dependencies: ["SwiftSFTP", "libssh2"] + swiftSFTPOpenSSLDependencies,
-    swiftSettings: strictConcurrencySettings
+    dependencies: ["SwiftSFTP", "libssh2", "OpenSSLCrypto"]
 )
 
 let package = Package(
@@ -158,9 +305,8 @@ let package = Package(
     products: [
         .library(
             name: "SwiftSFTP",
-            // Keep Swift/libssh2 call sites in their own Mach-O image. With static
-            // linkage, another SDK's crypto symbols can capture these calls even
-            // though OpenSSLCrypto itself is a separate dynamic framework.
+            // OpenSSL is compiled into SwiftSFTP with SDK-private C symbols. Keeping
+            // the product dynamic also maintains the existing delivery contract.
             type: .dynamic,
             targets: ["SwiftSFTP"]
         ),
@@ -169,6 +315,6 @@ let package = Package(
         .package(url: "https://github.com/RuiNelson/PathWorks.git", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
     ],
-    targets: opensslTargets + [libssh2Target, swiftSFTPTarget, swiftSFTPTestsTarget],
+    targets: [opensslTarget, libssh2Target, swiftSFTPTarget, swiftSFTPTestsTarget],
     swiftLanguageModes: [.v6]
 )

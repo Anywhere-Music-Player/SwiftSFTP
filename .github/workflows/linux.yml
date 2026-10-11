@@ -2,7 +2,7 @@ name: Linux
 
 on:
   push:
-    branches: [main]
+    branches: [main, bin-free]
   pull_request:
     branches: [main]
 
@@ -24,18 +24,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          submodules: true
+          submodules: recursive
 
       - name: Swift version
         run: swift --version
 
-      - name: Install system dependencies
+      - name: Install source verification tools
         run: |
           apt-get update -q
-          apt-get install -y libssl-dev pkg-config
+          apt-get install -y python3 perl make openssl openssh-client
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/Vendor/SwiftSFTP-OpenSSL"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/Vendor/SwiftSFTP-OpenSSL/Vendor/openssl"
+
+      - name: Verify prepared OpenSSL sources
+        run: |
+          git -C Vendor/SwiftSFTP-OpenSSL submodule update --init --checkout Vendor/openssl
+          python3 Vendor/SwiftSFTP-OpenSSL/Scripts/generate-openssl-sources.py --check
+          python3 Scripts/update-openssl-manifest.py --check
+
+      - name: Verify qualified libssh2 backend
+        run: python3 Scripts/generate-libssh2-backend.py --check
 
       - name: Build
         run: swift build --scratch-path /tmp/swift-build -v
+
+      - name: Generate test keys and fixtures
+        run: bash Scripts/generate-test-keys-and-fixtures.sh
 
       # Swift Testing filters match test IDs (`SwiftSFTPTests.KeyValidationTests/…`), not display names, so a
       # filter that matches nothing passes silently; fail instead. Swift Testing prefixes its summary with a symbol.
@@ -49,4 +64,7 @@ jobs:
             exit 1
           fi
         env:
-          OFFLINE_TEST_FILTER: "KeyValidationTests"
+          OFFLINE_TEST_FILTER: "KeyValidationTests|KeyParsingRegressionTests|PrivateKeyTypesTests|SSHUserKeyAlgorithmTests|SFTPPathTests|SFTPWindowsPathTests|WindowsSFTPPathTests"
+
+      - name: Test consumer crypto symbol isolation
+        run: swift test --package-path Tests/Packaging/CryptoIsolation --scratch-path /tmp/swift-crypto-isolation
