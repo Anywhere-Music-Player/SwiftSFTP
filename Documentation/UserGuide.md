@@ -1191,21 +1191,50 @@ The same methods are available through `SFTPClientProtocol`.
 
 ## Validating SSH Keys (Offline)
 
-You can check key material offline before using it for user authentication. `String` conforms to `KeyValidation`, and `PrivateKeyString` / `PrivateKeyFile` expose the same checks as `.valid` / `.isValidForSSH`, plus `.algorithm` (used when ordering multi-key authentication):
+Call `.isValidForSSH_PrivateKey()` directly on the `String` containing your private key before connecting. It returns
+a `Bool` indicating whether the key is valid for SSH user authentication. Replace the sample key text below with your own.
+
+For an **OpenSSH private key without a passphrase**, omit `passphrase`:
 
 ```swift
-if pem.isValidForSSH_PrivateKey(passphrase: "passphrase") {
-    // decryptable private key SFTPClient can authenticate with
-}
+import SwiftSFTP
 
-let key = PrivateKeyString(representation: pem, passphrase: nil)
-key.isValidForSSH   // also usable for SSH user authentication
-key.algorithm       // e.g. .ecdsaP256 — used when ordering multi-key auth
+let openSSH = """
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACCDEHKSMXe16whHqo6moq9GCYGzic4Z2vtGakChaf8NbAAAAKAA02KJANNi
+iQAAAAtzc2gtZWQyNTUxOQAAACCDEHKSMXe16whHqo6moq9GCYGzic4Z2vtGakChaf8NbA
+AAAECdOIB7s8sSZfEDF7SYJuSIkbBfhRaaDVwwJS2JUW34UoMQcpIxd7XrCEeqjqair0YJ
+gbOJzhna+0ZqQKFp/w1sAAAAFm5lbHNvbkBOZWxzb24tTTQubG9jYWwBAgMEBQYH
+-----END OPENSSH PRIVATE KEY-----
+"""
+
+print(openSSH.isValidForSSH_PrivateKey()) // true
 ```
 
-`.valid` and the `isValid_` checks accept any well-formed key; `.isValidForSSH` and the `isValidForSSH_` checks additionally require an algorithm OpenSSH accepts (RSA, ECDSA P-256 / P-384 / P-521, or Ed25519). For supported formats, passphrases, algorithm-specific checks, and public-key variants, see [User Authentication Key Validation](CryptographicUtils.md#user-authentication-key-validation-keyvalidation).
+For a **PEM private key with a passphrase**, supply `passphrase` (this example uses encrypted PKCS#8):
 
-> This validates key format and parseability only. It does not verify that the key is authorized on any particular server.
+```swift
+import SwiftSFTP
+
+let encryptedPEM = """
+-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIGjMF8GCSqGSIb3DQEFDTBSMDEGCSqGSIb3DQEFDDAkBBDlGU/qgUbBY/pYLtlW
+B1lkAgIIADAMBggqhkiG9w0CCQUAMB0GCWCGSAFlAwQBKgQQTAGvU8+jnK3tfWd0
+RfbqzQRA+/ABSfb97sHqcc0nZO1q4DG2eZEhgVppdpJ5lnhgqelnCLmF4X5mKrDR
+jCJCXPEfKsl6qOLYvzfKn1+LBOj5jw==
+-----END ENCRYPTED PRIVATE KEY-----
+"""
+
+print(encryptedPEM.isValidForSSH_PrivateKey(passphrase: "testpassword123")) // true
+```
+
+An incorrect or missing passphrase makes `.isValidForSSH_PrivateKey(passphrase:)` return `false` for the encrypted key.
+
+Both checks run offline and do not verify that the key is authorized on a server.
+
+For more formats, file-based validation, public keys, and algorithm-specific checks, see
+[User Authentication Key Validation](CryptographicUtils.md#user-authentication-key-validation-keyvalidation).
 
 ---
 
