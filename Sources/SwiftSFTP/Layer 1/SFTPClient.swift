@@ -38,7 +38,7 @@ public final class SFTPClient: SFTPClientProtocol {
 
     // MARK: Concurrency
 
-    let internalStateQueue = DispatchQueue(label: "com.ruinelson.SwiftSFTP.SFTPFile.InternalState")
+    let internalStateQueue = DispatchQueue(label: "com.ruinelson.SwiftSFTP.SFTPClient.InternalState")
     let sessionIOLock = NSRecursiveLock()
     /// Whether the last blocking call gave up waiting for the peer. Guarded by `sessionIOLock`.
     nonisolated(unsafe) var _peerStoppedResponding = false
