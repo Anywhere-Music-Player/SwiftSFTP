@@ -119,8 +119,8 @@ public final class SFTPClient: SFTPClientProtocol {
         self.trapOnDeInitWithoutClose = trapOnDeInitWithoutClose
         self.authentication = authentication
         self.compressionPreference = (
-            clientToServer: CompressionAlgorithm.normalizedPreferences(compressionPreference.clientToServer),
-            serverToClient: CompressionAlgorithm.normalizedPreferences(compressionPreference.serverToClient)
+            clientToServer: CompressionAlgorithm.sanitizePreferencesArray(compressionPreference.clientToServer),
+            serverToClient: CompressionAlgorithm.sanitizePreferencesArray(compressionPreference.serverToClient)
         )
 
         // init session
@@ -146,12 +146,12 @@ public final class SFTPClient: SFTPClientProtocol {
             clientToServerPreferences: self
                 .compressionPreference
                 .clientToServer
-                .map(\.methodPreferences)
+                .flatMap(\.openSSHStrings)
                 .joined(separator: ","),
             serverToClientPreferences: self
                 .compressionPreference
                 .serverToClient
-                .map(\.methodPreferences)
+                .flatMap(\.openSSHStrings)
                 .joined(separator: ",")
         )
 

@@ -32,16 +32,16 @@ struct CompressionTests {
 
     @Test("compression lists preserve order, remove duplicates, and always allow an uncompressed fallback")
     func compressionPreferences() {
-        #expect(CompressionAlgorithm.normalizedPreferences([]) == [.none])
-        #expect(CompressionAlgorithm.normalizedPreferences([.none, .none]) == [.none])
-        #expect(CompressionAlgorithm.normalizedPreferences([.zlib, .zlib]) == [.zlib, .none])
-        #expect(CompressionAlgorithm.normalizedPreferences([.zlib, .none, .zlib, .none]) == [.zlib, .none])
-        #expect(CompressionAlgorithm.normalizedPreferences([.none, .zlib, .none, .zlib]) == [.none, .zlib])
+        #expect(CompressionAlgorithm.sanitizePreferencesArray([]) == [.none])
+        #expect(CompressionAlgorithm.sanitizePreferencesArray([.none, .none]) == [.none])
+        #expect(CompressionAlgorithm.sanitizePreferencesArray([.zlib, .zlib]) == [.zlib, .none])
+        #expect(CompressionAlgorithm.sanitizePreferencesArray([.zlib, .none, .zlib, .none]) == [.zlib, .none])
+        #expect(CompressionAlgorithm.sanitizePreferencesArray([.none, .zlib, .none, .zlib]) == [.none, .zlib])
 
-        let zlibFirst = CompressionAlgorithm.normalizedPreferences([.zlib, .zlib])
-        #expect(zlibFirst.map(\.methodPreferences).joined(separator: ",") == "zlib@openssh.com,zlib,none")
-        let noneFirst = CompressionAlgorithm.normalizedPreferences([.none, .zlib, .none])
-        #expect(noneFirst.map(\.methodPreferences).joined(separator: ",") == "none,zlib@openssh.com,zlib")
+        let zlibFirst = CompressionAlgorithm.sanitizePreferencesArray([.zlib, .zlib])
+        #expect(zlibFirst.flatMap(\.openSSHStrings).joined(separator: ",") == "zlib@openssh.com,zlib,none")
+        let noneFirst = CompressionAlgorithm.sanitizePreferencesArray([.none, .zlib, .none])
+        #expect(noneFirst.flatMap(\.openSSHStrings).joined(separator: ",") == "none,zlib@openssh.com,zlib")
     }
 
     @Test(
