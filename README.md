@@ -103,7 +103,6 @@ For complete details, see:
 
 - [User's Guide](Documentation/UserGuide.md) — connections, transfers, and filesystem operations:
   - [Connecting to a Server](Documentation/UserGuide.md#connecting-to-a-server)
-  - [SSH Compression](Documentation/UserGuide.md#ssh-compression)
   - [Authentication](Documentation/UserGuide.md#authentication)
   - [Host Key Verification](Documentation/UserGuide.md#host-key-verification)
   - [Navigating the Remote Filesystem](Documentation/UserGuide.md#navigating-the-remote-filesystem)
